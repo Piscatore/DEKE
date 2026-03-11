@@ -1,4 +1,4 @@
-using Deke.Infrastructure.Data;
+using Deke.Infrastructure;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -9,12 +9,9 @@ builder.Services.AddSerilog(config =>
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("Deke")
-    ?? "Host=localhost;Database=deke;Username=deke;Password=deke";
+    ?? throw new InvalidOperationException("Connection string 'Deke' is required.");
 
-DapperConfig.Initialize();
-var dataSource = DapperConfig.CreateDataSource(connectionString);
-builder.Services.AddSingleton(dataSource);
-builder.Services.AddSingleton<DbConnectionFactory>();
+builder.Services.AddDekeInfrastructure(connectionString);
 
 var host = builder.Build();
 host.Run();

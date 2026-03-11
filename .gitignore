@@ -51,9 +51,9 @@ coverage/
 packages/
 nuget.exe
 
-# Models (large files - download separately)
-models/
-!models/.gitkeep
+# ONNX models (large files - download separately)
+/models/
+!/models/.gitkeep
 
 # Local environment
 .env

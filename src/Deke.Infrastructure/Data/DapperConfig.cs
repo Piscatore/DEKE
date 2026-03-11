@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Dapper.FastCrud;
 using Deke.Core.Models;
@@ -9,11 +10,12 @@ namespace Deke.Infrastructure.Data;
 
 public static class DapperConfig
 {
-    private static bool _initialized;
+    private static int _initialized;
 
     public static void Initialize()
     {
-        if (_initialized) return;
+        if (Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
+            return;
 
         // Set Dapper.FastCrud to use PostgreSQL dialect
         OrmConfiguration.DefaultDialect = SqlDialect.PostgreSql;
@@ -23,7 +25,7 @@ public static class DapperConfig
 
         // Register JSONB type handlers
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<ExtractedEntity>>());
-        SqlMapper.AddTypeHandler(new JsonbTypeHandler<Dictionary<string, object>>());
+        SqlMapper.AddTypeHandler(new JsonbTypeHandler<Dictionary<string, JsonElement>>());
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<TermContext>>());
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<Dictionary<string, string>>());
 
@@ -32,8 +34,6 @@ public static class DapperConfig
 
         // Dapper: map underscore columns to PascalCase properties
         DefaultTypeMap.MatchNamesWithUnderscores = true;
-
-        _initialized = true;
     }
 
     public static NpgsqlDataSource CreateDataSource(string connectionString)

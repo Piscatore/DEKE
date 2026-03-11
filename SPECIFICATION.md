@@ -16,9 +16,9 @@ DEKE is a self-improving, domain-specific knowledge engine that:
 | Component | Technology | NuGet Package | Version |
 |-----------|------------|---------------|---------|
 | Runtime | .NET 9 | - | Latest |
-| Database | PostgreSQL 16 + pgvector | Npgsql, Npgsql.EntityFrameworkCore.PostgreSQL | 9.x |
-| Vector support | pgvector | Pgvector | 0.3.x |
-| ORM | EF Core | Microsoft.EntityFrameworkCore | 9.x |
+| Database | PostgreSQL 16 + pgvector | Npgsql | 9.0.3 |
+| Vector support | pgvector | Pgvector, Pgvector.Dapper | 0.3.0 |
+| Data Access | Dapper + Dapper.FastCrud | Dapper, Dapper.FastCrud | 2.1.35, 3.3.2 |
 | Embeddings | ONNX Runtime | Microsoft.ML.OnnxRuntime | 1.19.x |
 | Tokenizer | BERTTokenizers | BERTTokenizers | 1.2.x |
 | Web API | ASP.NET Core Minimal APIs | Built-in | - |
@@ -1872,6 +1872,8 @@ This log tracks significant decisions and specification changes throughout the p
 | Version | Date | Summary |
 |---------|------|---------|
 | 1.0.0 | 2026-03 | Initial specification created. Defines full architecture: Core models and interfaces, Infrastructure (Dapper + pgvector + ONNX embeddings + harvesters), REST API, MCP server, background worker, and PostgreSQL schema. |
+| 1.1.0 | 2026-03-11 | **Data access: EF Core replaced with Dapper + Dapper.FastCrud.** Original spec listed EF Core, but Dapper was chosen during implementation for better control over raw SQL vector operations (pgvector `<=>` operator), simpler mapping with `Pgvector.Dapper`, and lower overhead for a read-heavy semantic search workload. FastCrud handles CRUD generation. DbConnectionFactory wraps NpgsqlDataSource for connection pooling. |
+| 1.1.1 | 2026-03-11 | **Review fixes.** Added missing `FactRelation` and `LearningLog` models to Core. Converted DTOs to records per style guide. Moved `ExtractedFact`/`HarvestResult` from interface files to Models/. Changed `Dictionary<string, object>` to `Dictionary<string, JsonElement>` for type-safe JSON round-trips. Made `DapperConfig.Initialize()` thread-safe. Extracted shared DI setup to `AddDekeInfrastructure()` extension. Moved connection strings to `appsettings.Development.json` only. Added `Directory.Build.props` for shared project properties. Pinned NuGet package versions. Completed `init.sql` with all 6 table definitions and indexes. |
 
 ---
 

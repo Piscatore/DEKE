@@ -1,26 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Deke.Core\Deke.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="1.1.*" />
-    <PackageReference Include="Dapper" Version="2.*" />
-    <PackageReference Include="Dapper.FastCrud" Version="3.*" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.*" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.*" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.19.*" />
-    <PackageReference Include="Npgsql" Version="9.*" />
-    <PackageReference Include="Pgvector" Version="0.3.*" />
-    <PackageReference Include="Pgvector.Dapper" Version="0.3.*" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="9.*" />
+    <PackageReference Include="AngleSharp" Version="1.1.2" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Dapper.FastCrud" Version="3.3.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.19.2" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="Pgvector" Version="0.3.0" />
+    <PackageReference Include="Pgvector.Dapper" Version="0.3.0" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

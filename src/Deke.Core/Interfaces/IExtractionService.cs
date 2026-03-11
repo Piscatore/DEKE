@@ -10,10 +10,3 @@ public interface IExtractionService
         string? sourceContext = null,
         CancellationToken ct = default);
 }
-
-public class ExtractedFact
-{
-    public required string Content { get; set; }
-    public float Confidence { get; set; } = 0.8f;
-    public List<ExtractedEntity> Entities { get; set; } = [];
-}

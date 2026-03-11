@@ -1,6 +1,6 @@
 @Deke.Api_HostAddress = http://localhost:5020
 
-GET {{Deke.Api_HostAddress}}/weatherforecast/
+GET {{Deke.Api_HostAddress}}/health
 Accept: application/json
 
 ###
