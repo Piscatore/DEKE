@@ -44,6 +44,20 @@ public class FactRelationRepository : IFactRelationRepository
             new { id });
     }
 
+    public async Task<bool> ExistsAsync(Guid fromFactId, Guid toFactId, string relationType, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var count = await conn.ExecuteScalarAsync<int>(
+            """
+            SELECT COUNT(1) FROM fact_relations
+            WHERE from_fact_id = @fromFactId
+              AND to_fact_id = @toFactId
+              AND relation_type = @relationType
+            """,
+            new { fromFactId, toFactId, relationType });
+        return count > 0;
+    }
+
     public async Task<List<FactRelation>> GetByRelationTypeAsync(string relationType, string domain, CancellationToken ct = default)
     {
         await using var conn = await _db.CreateConnectionAsync(ct);

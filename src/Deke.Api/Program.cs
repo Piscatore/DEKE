@@ -1,3 +1,4 @@
+using Deke.Api.Endpoints;
 using Deke.Infrastructure;
 using Serilog;
 
@@ -12,6 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
     ?? throw new InvalidOperationException("Connection string 'Deke' is required.");
 
 builder.Services.AddDekeInfrastructure(connectionString);
+builder.Services.AddDekeEmbeddings(builder.Configuration);
 
 // OpenAPI
 builder.Services.AddOpenApi();
@@ -24,5 +26,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+app.MapSearchEndpoints();
+app.MapFactEndpoints();
+app.MapSourceEndpoints();
 
 app.Run();

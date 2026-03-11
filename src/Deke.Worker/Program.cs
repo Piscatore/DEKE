@@ -1,4 +1,5 @@
 using Deke.Infrastructure;
+using Deke.Worker.Services;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -12,6 +13,12 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
     ?? throw new InvalidOperationException("Connection string 'Deke' is required.");
 
 builder.Services.AddDekeInfrastructure(connectionString);
+builder.Services.AddDekeEmbeddings(builder.Configuration);
+builder.Services.AddDekeHarvesters();
+
+builder.Services.AddHostedService<SourceMonitorService>();
+builder.Services.AddHostedService<PatternDiscoveryService>();
+builder.Services.AddHostedService<LearningCycleService>();
 
 var host = builder.Build();
 host.Run();

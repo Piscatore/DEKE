@@ -1,6 +1,11 @@
 using Deke.Core.Interfaces;
 using Deke.Infrastructure.Data;
+using Deke.Infrastructure.Embeddings;
+using Deke.Infrastructure.Extraction;
+using Deke.Infrastructure.Harvesters;
+using Deke.Infrastructure.Llm;
 using Deke.Infrastructure.Repositories;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Deke.Infrastructure;
@@ -22,6 +27,31 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFactRelationRepository, FactRelationRepository>();
         services.AddScoped<ILearningLogRepository, LearningLogRepository>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddDekeEmbeddings(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        var config = new EmbeddingsConfig
+        {
+            ModelPath = configuration["Embeddings:ModelPath"] ?? "models/all-MiniLM-L6-v2/model.onnx",
+            VocabPath = configuration["Embeddings:VocabPath"] ?? "models/all-MiniLM-L6-v2/vocab.txt"
+        };
+
+        services.AddSingleton(config);
+        services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddDekeHarvesters(this IServiceCollection services)
+    {
+        services.AddHttpClient();
+        services.AddScoped<IHarvester, RssHarvester>();
+        services.AddScoped<IHarvester, WebPageHarvester>();
+        services.AddScoped<IExtractionService, SimpleExtractionService>();
+        services.AddSingleton<ILlmService, NoOpLlmService>();
         return services;
     }
 }

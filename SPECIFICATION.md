@@ -1771,7 +1771,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
    (Testcontainers or Docker Compose) covering vector similarity search,
    JSONB handling, and UUID array operations
 
-### Phase 2: Embeddings — NEXT
+### Phase 2: Embeddings — DONE
 
 1. Create `download-model.ps1` / `download-model.sh` scripts for automated
    model download (referenced by README but not yet implemented)
@@ -1783,20 +1783,20 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 > **Critical-path blocker**: All search functionality (API, MCP, Worker)
 > depends on embeddings being operational.
 
-### Phase 4: API — BLOCKED (by Phase 2)
+### Phase 4: API — DONE
 
 1. Implement minimal API endpoints
 2. Test search endpoint (requires working embeddings)
 3. Test add fact endpoint
 4. Add OpenAPI/Swagger
 
-### Phase 5: MCP Server — BLOCKED (by Phase 2)
+### Phase 5: MCP Server — DONE
 
 1. Implement MCP tools
 2. Test with Claude Desktop
 3. Configure for claude.ai or Claude Code
 
-### Phase 6: Background Services — BLOCKED (by Phase 2)
+### Phase 6: Background Services — DONE
 
 1. Build RSS harvester end-to-end first (ingest → extract → embed → store)
    as the reference implementation for the harvest pipeline
@@ -1805,7 +1805,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 4. Implement basic extraction service
 5. Test end-to-end source monitoring
 
-### Phase 7: Learning — BLOCKED (by Phase 6)
+### Phase 7: Learning — DONE
 
 1. Implement pattern discovery
 2. Implement relation mapping
@@ -1895,6 +1895,8 @@ This log tracks significant decisions and specification changes throughout the p
 | 1.1.0 | 2026-03-11 | **Data access: EF Core replaced with Dapper + Dapper.FastCrud.** Original spec listed EF Core, but Dapper was chosen during implementation for better control over raw SQL vector operations (pgvector `<=>` operator), simpler mapping with `Pgvector.Dapper`, and lower overhead for a read-heavy semantic search workload. FastCrud handles CRUD generation. DbConnectionFactory wraps NpgsqlDataSource for connection pooling. |
 | 1.1.1 | 2026-03-11 | **Review fixes.** Added missing `FactRelation` and `LearningLog` models to Core. Converted DTOs to records per style guide. Moved `ExtractedFact`/`HarvestResult` from interface files to Models/. Changed `Dictionary<string, object>` to `Dictionary<string, JsonElement>` for type-safe JSON round-trips. Made `DapperConfig.Initialize()` thread-safe. Extracted shared DI setup to `AddDekeInfrastructure()` extension. Moved connection strings to `appsettings.Development.json` only. Added `Directory.Build.props` for shared project properties. Pinned NuGet package versions. Completed `init.sql` with all 6 table definitions and indexes. |
 | 1.2.0 | 2026-03-11 | **Phase 1 repositories complete. Plan merged with product review.** All 6 repositories implemented using raw Dapper SQL (not FastCrud) due to special column types (JSONB, vector, UUID[], INTERVAL, enum-as-varchar). Added `EnumTypeHandler<T>` for SourceType/PatternType. Renamed `Pattern.Type` to `Pattern.PatternType` for DB column mapping. Phase plan updated with status tracking and product review recommendations (model download automation, integration tests, confidence decay). |
+| 1.3.0 | 2026-03-11 | **Phase 2: Embeddings Implementation complete.** `OnnxEmbeddingService` implements `IEmbeddingService` with manual WordPiece tokenizer — no BERTTokenizers NuGet dependency needed. `EmbeddingsConfig` is a simple POCO (not `IOptions<T>`). Separate DI extension `AddDekeEmbeddings(IConfiguration)` keeps embedding concerns isolated from `AddDekeInfrastructure`. `InferenceSession` registered as singleton (thread-safe for `Run()`). Added PowerShell download script (`download-model.ps1`) alongside existing bash script. |
+| 1.4.0 | 2026-03-11 | **Phases 4-7 complete.** API endpoints implemented (search, facts, sources). MCP server uses `Host.CreateApplicationBuilder` with DI (consistent with Api/Worker), MCP SDK v1.1.0 uses `[McpServerToolType]`/`[McpServerTool]` attributes with method-level DI parameter injection. Background services: `RssHarvester` (`SyndicationFeed`), `WebPageHarvester` (AngleSharp), `SimpleExtractionService` (heuristic sentence splitting — no LLM dependency). Learning: `PatternDiscoveryService` (embedding similarity clustering), `LearningCycleService` (relation mapping). Pluggable `ILlmService` interface added with `NoOpLlmService` default — ready for Ollama/Claude integration later. `ExistsAsync` added to `IFactRelationRepository`. |
 
 ---
 
