@@ -2,19 +2,11 @@
   "mcpServers": {
     "postgres-mcp": {
       "type": "stdio",
-      "command": "docker",
+      "command": "postgres-mcp",
       "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "DATABASE_URI",
-        "crystaldba/postgres-mcp",
+        "postgresql://CC:NFI2y7Gm1nNs791ONvI0@localhost:5432/DEKE",
         "--access-mode=unrestricted"
-      ],
-      "env": {
-        "DATABASE_URI": "postgresql://deke:deke@host.docker.internal:5432/deke"
-      }
+      ]
     },
     "docker-mcp": {
       "type": "stdio",
