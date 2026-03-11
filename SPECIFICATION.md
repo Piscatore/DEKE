@@ -69,6 +69,8 @@ DEKE/
 │   │   │   ├── ISourceRepository.cs
 │   │   │   ├── ITermRepository.cs
 │   │   │   ├── IPatternRepository.cs
+│   │   │   ├── IFactRelationRepository.cs
+│   │   │   ├── ILearningLogRepository.cs
 │   │   │   ├── IEmbeddingService.cs
 │   │   │   ├── IExtractionService.cs
 │   │   │   └── IHarvester.cs
@@ -76,11 +78,20 @@ DEKE/
 │   │
 │   ├── Deke.Infrastructure/            # Implementations
 │   │   ├── Data/
-│   │   │   ├── DekaDbContext.cs
+│   │   │   ├── DbConnectionFactory.cs
+│   │   │   ├── DapperConfig.cs
+│   │   │   └── TypeHandlers/
+│   │   │       ├── JsonbTypeHandler.cs
+│   │   │       ├── GuidArrayTypeHandler.cs
+│   │   │       └── EnumTypeHandler.cs
+│   │   ├── Repositories/
 │   │   │   ├── FactRepository.cs
 │   │   │   ├── SourceRepository.cs
 │   │   │   ├── TermRepository.cs
-│   │   │   └── PatternRepository.cs
+│   │   │   ├── PatternRepository.cs
+│   │   │   ├── FactRelationRepository.cs
+│   │   │   └── LearningLogRepository.cs
+│   │   ├── ServiceCollectionExtensions.cs
 │   │   ├── Embeddings/
 │   │   │   ├── OnnxEmbeddingService.cs
 │   │   │   └── BertTokenizer.cs
@@ -370,7 +381,7 @@ public class Pattern
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Description { get; set; }
     public required string Domain { get; set; }
-    public PatternType Type { get; set; } = PatternType.Observation;
+    public PatternType PatternType { get; set; } = PatternType.Observation;
     public List<Guid> EvidenceFactIds { get; set; } = [];
     public float Confidence { get; set; }
     public int OccurrenceCount { get; set; } = 1;
@@ -1184,7 +1195,7 @@ public record AddFactRequest(
     string Domain,
     float? Confidence = null,
     Guid? SourceId = null,
-    Dictionary<string, object>? Metadata = null
+    Dictionary<string, JsonElement>? Metadata = null
 );
 ```
 
@@ -1193,7 +1204,6 @@ public record AddFactRequest(
 ```csharp
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Deke.Api.Endpoints;
 
@@ -1521,10 +1531,9 @@ public class DomainStats
 
 ```csharp
 using Deke.Core.Interfaces;
-using Deke.Infrastructure.Data;
+using Deke.Infrastructure;
 using Deke.Infrastructure.Embeddings;
 using Deke.Mcp.Tools;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -1536,21 +1545,18 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: true);
 builder.Configuration.AddEnvironmentVariables();
 
-var connectionString = builder.Configuration.GetConnectionString("Deke") 
+var connectionString = builder.Configuration.GetConnectionString("Deke")
     ?? "Host=localhost;Database=deke;Username=deke;Password=deke";
-var modelPath = builder.Configuration["Embeddings:ModelPath"] 
+var modelPath = builder.Configuration["Embeddings:ModelPath"]
     ?? "models/all-MiniLM-L6-v2/model.onnx";
-var vocabPath = builder.Configuration["Embeddings:VocabPath"] 
+var vocabPath = builder.Configuration["Embeddings:VocabPath"]
     ?? "models/all-MiniLM-L6-v2/vocab.txt";
 
-// Services
-builder.Services.AddDbContext<DekaDbContext>(options =>
-    options.UseNpgsql(connectionString));
+// Services — uses Dapper + DbConnectionFactory, registers all repositories
+builder.Services.AddDekeInfrastructure(connectionString);
 
-builder.Services.AddSingleton<IEmbeddingService>(sp => 
+builder.Services.AddSingleton<IEmbeddingService>(sp =>
     new OnnxEmbeddingService(modelPath, vocabPath));
-
-builder.Services.AddScoped<IFactRepository, FactRepository>();
 
 // MCP Server
 builder.Services.AddMcpServer()
@@ -1746,52 +1752,66 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 ## Getting Started (Implementation Order)
 
-### Phase 1: Foundation
+### Phase 1: Foundation — DONE
 
 1. Create solution and project structure
-2. Set up Docker Compose for PostgreSQL
-3. Implement Core models and interfaces
-4. Implement DekaDbContext with EF Core
-5. Run database migrations to create tables
+2. Set up Docker Compose for PostgreSQL with pgvector
+3. Implement Core models and interfaces (all 6 entity types)
+4. Implement `DbConnectionFactory` + `DapperConfig` (replaces EF Core)
+5. Schema managed via `init.sql` (runs on first container start)
 
-### Phase 2: Embeddings
+### Phase 3: Storage — DONE
 
-1. Download ONNX model and vocab
-2. Implement OnnxEmbeddingService
-3. Write unit tests for embedding generation
-4. Test cosine similarity calculation
+1. All 6 repositories implemented using raw Dapper SQL (not FastCrud) due to
+   special column types: JSONB, vector, UUID[], INTERVAL, enum-as-varchar
+2. Custom type handlers: `JsonbTypeHandler<T>`, `GuidArrayTypeHandler`,
+   `EnumTypeHandler<T>` (for SourceType/PatternType stored as varchar)
+3. `AddDekeInfrastructure()` extension registers all repositories via DI
+4. Integration tests needed: repository tests against real PostgreSQL
+   (Testcontainers or Docker Compose) covering vector similarity search,
+   JSONB handling, and UUID array operations
 
-### Phase 3: Storage
+### Phase 2: Embeddings — NEXT
 
-1. Implement FactRepository with pgvector search
-2. Implement SourceRepository
-3. Test vector similarity search works
+1. Create `download-model.ps1` / `download-model.sh` scripts for automated
+   model download (referenced by README but not yet implemented)
+2. Download ONNX model and vocab
+3. Implement `OnnxEmbeddingService` with L2 normalization
+4. Write unit tests for embedding generation
+5. Test cosine similarity calculation
 
-### Phase 4: API
+> **Critical-path blocker**: All search functionality (API, MCP, Worker)
+> depends on embeddings being operational.
+
+### Phase 4: API — BLOCKED (by Phase 2)
 
 1. Implement minimal API endpoints
-2. Test search endpoint
+2. Test search endpoint (requires working embeddings)
 3. Test add fact endpoint
 4. Add OpenAPI/Swagger
 
-### Phase 5: MCP Server
+### Phase 5: MCP Server — BLOCKED (by Phase 2)
 
 1. Implement MCP tools
 2. Test with Claude Desktop
 3. Configure for claude.ai or Claude Code
 
-### Phase 6: Background Services
+### Phase 6: Background Services — BLOCKED (by Phase 2)
 
-1. Implement harvesters (RSS, WebPage)
-2. Implement SourceMonitorService
-3. Implement basic extraction service
-4. Test end-to-end source monitoring
+1. Build RSS harvester end-to-end first (ingest → extract → embed → store)
+   as the reference implementation for the harvest pipeline
+2. Implement WebPageHarvester
+3. Implement SourceMonitorService
+4. Implement basic extraction service
+5. Test end-to-end source monitoring
 
-### Phase 7: Learning
+### Phase 7: Learning — BLOCKED (by Phase 6)
 
 1. Implement pattern discovery
 2. Implement relation mapping
 3. Add learning cycle service
+4. Add confidence decay — reduce pattern confidence over time when not
+   revalidated by new evidence
 
 ---
 
@@ -1874,6 +1894,7 @@ This log tracks significant decisions and specification changes throughout the p
 | 1.0.0 | 2026-03 | Initial specification created. Defines full architecture: Core models and interfaces, Infrastructure (Dapper + pgvector + ONNX embeddings + harvesters), REST API, MCP server, background worker, and PostgreSQL schema. |
 | 1.1.0 | 2026-03-11 | **Data access: EF Core replaced with Dapper + Dapper.FastCrud.** Original spec listed EF Core, but Dapper was chosen during implementation for better control over raw SQL vector operations (pgvector `<=>` operator), simpler mapping with `Pgvector.Dapper`, and lower overhead for a read-heavy semantic search workload. FastCrud handles CRUD generation. DbConnectionFactory wraps NpgsqlDataSource for connection pooling. |
 | 1.1.1 | 2026-03-11 | **Review fixes.** Added missing `FactRelation` and `LearningLog` models to Core. Converted DTOs to records per style guide. Moved `ExtractedFact`/`HarvestResult` from interface files to Models/. Changed `Dictionary<string, object>` to `Dictionary<string, JsonElement>` for type-safe JSON round-trips. Made `DapperConfig.Initialize()` thread-safe. Extracted shared DI setup to `AddDekeInfrastructure()` extension. Moved connection strings to `appsettings.Development.json` only. Added `Directory.Build.props` for shared project properties. Pinned NuGet package versions. Completed `init.sql` with all 6 table definitions and indexes. |
+| 1.2.0 | 2026-03-11 | **Phase 1 repositories complete. Plan merged with product review.** All 6 repositories implemented using raw Dapper SQL (not FastCrud) due to special column types (JSONB, vector, UUID[], INTERVAL, enum-as-varchar). Added `EnumTypeHandler<T>` for SourceType/PatternType. Renamed `Pattern.Type` to `Pattern.PatternType` for DB column mapping. Phase plan updated with status tracking and product review recommendations (model download automation, integration tests, confidence decay). |
 
 ---
 
