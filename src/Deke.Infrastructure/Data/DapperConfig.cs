@@ -32,6 +32,10 @@ public static class DapperConfig
         // Register UUID[] type handler
         SqlMapper.AddTypeHandler(new GuidArrayTypeHandler());
 
+        // Register enum type handlers
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<SourceType>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<PatternType>());
+
         // Dapper: map underscore columns to PascalCase properties
         DefaultTypeMap.MatchNamesWithUnderscores = true;
     }

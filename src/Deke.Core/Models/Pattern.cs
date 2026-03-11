@@ -5,7 +5,7 @@ public class Pattern
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Description { get; set; }
     public required string Domain { get; set; }
-    public PatternType Type { get; set; } = PatternType.Observation;
+    public PatternType PatternType { get; set; } = PatternType.Observation;
     public List<Guid> EvidenceFactIds { get; set; } = [];
     public float Confidence { get; set; }
     public int OccurrenceCount { get; set; } = 1;
