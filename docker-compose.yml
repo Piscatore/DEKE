@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: deke-postgres
+    environment:
+      POSTGRES_USER: deke
+      POSTGRES_PASSWORD: deke
+      POSTGRES_DB: deke
+    ports:
+      - "5432:5432"
+    volumes:
+      - deke-postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deke -d deke"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  deke-postgres-data:

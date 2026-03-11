@@ -1,0 +1,78 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# IDE
+.idea/
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*~
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+nuget.exe
+
+# Models (large files - download separately)
+models/
+!models/.gitkeep
+
+# Local environment
+.env
+.env.local
+*.local.json
+appsettings.*.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes (if local)
+postgres-data/
+
+# Claude Code / Agent local state
+.agents/
+.claude/
+.serena/
+skills-lock.json
+
+# Archive files
+*.zip

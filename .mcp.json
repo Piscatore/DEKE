@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "postgres-mcp": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "DATABASE_URI",
+        "crystaldba/postgres-mcp",
+        "--access-mode=unrestricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://deke:deke@host.docker.internal:5432/deke"
+      }
+    },
+    "docker-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-docker"
+      ]
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "nuget": {
+      "type": "stdio",
+      "command": "dnx",
+      "args": [
+        "NuGet.Mcp.Server",
+        "--prerelease",
+        "--yes"
+      ]
+    }
+  }
+}

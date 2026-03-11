@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1876EF3A-2F6A-4B14-8A0A-4BE27739E705}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Core", "src\Deke.Core\Deke.Core.csproj", "{1D778B40-9696-42E1-AFE5-7D5673265ED9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Infrastructure", "src\Deke.Infrastructure\Deke.Infrastructure.csproj", "{6D73DADF-E451-4F53-B175-0629BB76E983}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Api", "src\Deke.Api\Deke.Api.csproj", "{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Mcp", "src\Deke.Mcp\Deke.Mcp.csproj", "{B958A7E4-BCAB-4A38-97BF-42C57888E434}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Worker", "src\Deke.Worker\Deke.Worker.csproj", "{E4D5DF22-3225-40B1-BD4D-AB302696658E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A41358CA-B421-4BB5-91B4-13424B433F8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deke.Tests", "tests\Deke.Tests\Deke.Tests.csproj", "{7762F452-36C2-4B79-A1D5-23745ACE76AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D778B40-9696-42E1-AFE5-7D5673265ED9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D778B40-9696-42E1-AFE5-7D5673265ED9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D778B40-9696-42E1-AFE5-7D5673265ED9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D778B40-9696-42E1-AFE5-7D5673265ED9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D73DADF-E451-4F53-B175-0629BB76E983}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D73DADF-E451-4F53-B175-0629BB76E983}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D73DADF-E451-4F53-B175-0629BB76E983}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D73DADF-E451-4F53-B175-0629BB76E983}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B958A7E4-BCAB-4A38-97BF-42C57888E434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B958A7E4-BCAB-4A38-97BF-42C57888E434}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B958A7E4-BCAB-4A38-97BF-42C57888E434}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B958A7E4-BCAB-4A38-97BF-42C57888E434}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4D5DF22-3225-40B1-BD4D-AB302696658E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4D5DF22-3225-40B1-BD4D-AB302696658E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4D5DF22-3225-40B1-BD4D-AB302696658E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4D5DF22-3225-40B1-BD4D-AB302696658E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7762F452-36C2-4B79-A1D5-23745ACE76AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7762F452-36C2-4B79-A1D5-23745ACE76AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7762F452-36C2-4B79-A1D5-23745ACE76AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7762F452-36C2-4B79-A1D5-23745ACE76AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1D778B40-9696-42E1-AFE5-7D5673265ED9} = {1876EF3A-2F6A-4B14-8A0A-4BE27739E705}
+		{6D73DADF-E451-4F53-B175-0629BB76E983} = {1876EF3A-2F6A-4B14-8A0A-4BE27739E705}
+		{1A9C2EEB-892D-486A-94C7-0D79E9FC79D4} = {1876EF3A-2F6A-4B14-8A0A-4BE27739E705}
+		{B958A7E4-BCAB-4A38-97BF-42C57888E434} = {1876EF3A-2F6A-4B14-8A0A-4BE27739E705}
+		{E4D5DF22-3225-40B1-BD4D-AB302696658E} = {1876EF3A-2F6A-4B14-8A0A-4BE27739E705}
+		{7762F452-36C2-4B79-A1D5-23745ACE76AF} = {A41358CA-B421-4BB5-91B4-13424B433F8C}
+	EndGlobalSection
+EndGlobal
