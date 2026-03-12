@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
 namespace Deke.Worker.Services;
@@ -24,6 +24,10 @@ public class PatternDiscoveryService : BackgroundService
             try
             {
                 await DiscoverPatternsAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
             }
             catch (Exception ex)
             {
@@ -68,11 +72,11 @@ public class PatternDiscoveryService : BackgroundService
 
                 // Build similarity clusters using union-find approach
                 var clusters = BuildClusters(recentFacts, embeddingService);
+                var existingPatterns = await patternRepo.GetActiveByDomainAsync(domain, ct);
 
                 var patternsDiscovered = 0;
                 foreach (var cluster in clusters.Where(c => c.Count >= 3))
                 {
-                    var existingPatterns = await patternRepo.GetActiveByDomainAsync(domain, ct);
                     var clusterIds = cluster.Select(f => f.Id).ToHashSet();
 
                     // Check if a pattern already covers these facts

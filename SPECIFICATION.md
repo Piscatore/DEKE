@@ -48,7 +48,7 @@ Store in: `models/all-MiniLM-L6-v2/`
 ```
 DEKE/
 ├── DEKE.sln
-├── docker-compose.yml
+├── podman-compose.yml
 ├── .gitignore
 ├── README.md
 ├── SPECIFICATION.md                    # This file
@@ -1686,9 +1686,9 @@ public class SourceMonitorService : BackgroundService
 
 ---
 
-## Docker Compose
+## Podman Compose
 
-### docker-compose.yml
+### podman-compose.yml
 
 ```yaml
 version: '3.8'
@@ -1755,7 +1755,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ### Phase 1: Foundation — DONE
 
 1. Create solution and project structure
-2. Set up Docker Compose for PostgreSQL with pgvector
+2. Set up Podman Compose for PostgreSQL with pgvector (Docker Compose also works)
 3. Implement Core models and interfaces (all 6 entity types)
 4. Implement `DbConnectionFactory` + `DapperConfig` (replaces EF Core)
 5. Schema managed via `init.sql` (runs on first container start)
@@ -1768,7 +1768,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
    `EnumTypeHandler<T>` (for SourceType/PatternType stored as varchar)
 3. `AddDekeInfrastructure()` extension registers all repositories via DI
 4. Integration tests needed: repository tests against real PostgreSQL
-   (Testcontainers or Docker Compose) covering vector similarity search,
+   (Testcontainers or Podman/Docker Compose) covering vector similarity search,
    JSONB handling, and UUID array operations
 
 ### Phase 2: Embeddings — DONE
@@ -1844,8 +1844,8 @@ dotnet add src/Deke.Mcp reference src/Deke.Core src/Deke.Infrastructure
 dotnet add src/Deke.Worker reference src/Deke.Core src/Deke.Infrastructure
 dotnet add tests/Deke.Tests reference src/Deke.Core src/Deke.Infrastructure
 
-# Start PostgreSQL
-docker-compose up -d
+# Start PostgreSQL (or use docker-compose, or install PostgreSQL locally)
+podman-compose up -d
 
 # Run API
 dotnet run --project src/Deke.Api
@@ -1897,6 +1897,8 @@ This log tracks significant decisions and specification changes throughout the p
 | 1.2.0 | 2026-03-11 | **Phase 1 repositories complete. Plan merged with product review.** All 6 repositories implemented using raw Dapper SQL (not FastCrud) due to special column types (JSONB, vector, UUID[], INTERVAL, enum-as-varchar). Added `EnumTypeHandler<T>` for SourceType/PatternType. Renamed `Pattern.Type` to `Pattern.PatternType` for DB column mapping. Phase plan updated with status tracking and product review recommendations (model download automation, integration tests, confidence decay). |
 | 1.3.0 | 2026-03-11 | **Phase 2: Embeddings Implementation complete.** `OnnxEmbeddingService` implements `IEmbeddingService` with manual WordPiece tokenizer — no BERTTokenizers NuGet dependency needed. `EmbeddingsConfig` is a simple POCO (not `IOptions<T>`). Separate DI extension `AddDekeEmbeddings(IConfiguration)` keeps embedding concerns isolated from `AddDekeInfrastructure`. `InferenceSession` registered as singleton (thread-safe for `Run()`). Added PowerShell download script (`download-model.ps1`) alongside existing bash script. |
 | 1.4.0 | 2026-03-11 | **Phases 4-7 complete.** API endpoints implemented (search, facts, sources). MCP server uses `Host.CreateApplicationBuilder` with DI (consistent with Api/Worker), MCP SDK v1.1.0 uses `[McpServerToolType]`/`[McpServerTool]` attributes with method-level DI parameter injection. Background services: `RssHarvester` (`SyndicationFeed`), `WebPageHarvester` (AngleSharp), `SimpleExtractionService` (heuristic sentence splitting — no LLM dependency). Learning: `PatternDiscoveryService` (embedding similarity clustering), `LearningCycleService` (relation mapping). Pluggable `ILlmService` interface added with `NoOpLlmService` default — ready for Ollama/Claude integration later. `ExistsAsync` added to `IFactRelationRepository`. |
+| 1.5.0 | 2026-03-12 | **Post-review hardening.** Broad pass fixing bugs, adding security, and improving operational readiness. **Bug fixes**: Worker services were silently no-ops — `GetRecentAsync` and `GetWithoutRelationsAsync` queries omitted the embedding column, so `PatternDiscoveryService` and `LearningCycleService` received null embeddings and skipped all facts. MCP `SearchTools` confidence formatting used `{confidence:P0}` (producing "1%" for 0.7) instead of `{confidence * 100:F0}%`. **Security**: Input validation and SSRF protection added to all API endpoints — URL scheme restricted to http/https, private/loopback IP ranges blocked, limit parameters clamped to safe ranges, empty string inputs rejected. `RssHarvester` XML parsing hardened (`DtdProcessing.Prohibit`, `XmlResolver = null`) to prevent XXE attacks. API key authentication added on write endpoints (POST, DELETE) via `X-Api-Key` header with constant-time comparison. **Reliability**: Background services now catch `OperationCanceledException` cleanly during shutdown instead of logging spurious errors. `PatternDiscoveryService` moved `GetActiveByDomainAsync` call outside the cluster loop to eliminate redundant DB queries per iteration. `NpgsqlDataSource` registered via factory in DI for proper disposal on shutdown. **Project infrastructure**: MIT LICENSE file added (was claimed in README but missing from repo). `.editorconfig` added for code style enforcement. CI/CD pipeline added via GitHub Actions (build + test on push/PR to main). README expanded with prerequisites, worked examples, and status badge. CONTRIBUTING.md added with development workflow and conventions. |
+| 1.5.1 | 2026-03-12 | **Container tooling: Podman preferred, Docker alternative.** Renamed `docker-compose.yml` to `podman-compose.yml`. Podman is now the documented preferred container tool; Docker Compose remains a supported alternative. PostgreSQL can also be installed locally without any container tool. The compose file contents (pgvector image, volumes, healthcheck) are unchanged. |
 
 ---
 

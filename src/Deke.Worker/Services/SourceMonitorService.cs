@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
 namespace Deke.Worker.Services;
@@ -24,6 +24,10 @@ public class SourceMonitorService : BackgroundService
             try
             {
                 await CheckSourcesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
             }
             catch (Exception ex)
             {

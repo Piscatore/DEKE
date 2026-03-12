@@ -1,3 +1,4 @@
+﻿using System.Net;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
@@ -5,29 +6,63 @@ namespace Deke.Api.Endpoints;
 
 public static class SourceEndpoints
 {
+    private static readonly string[] AllowedSchemes = ["http", "https"];
+
+    private static bool IsValidPublicUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return false;
+
+        if (!AllowedSchemes.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase))
+            return false;
+
+        if (IPAddress.TryParse(uri.Host, out var ip))
+        {
+            if (IPAddress.IsLoopback(ip) || ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal)
+                return false;
+
+            // Reject private IPv4 ranges
+            var bytes = ip.GetAddressBytes();
+            if (bytes.Length == 4)
+            {
+                if (bytes[0] == 10) return false;
+                if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return false;
+                if (bytes[0] == 192 && bytes[1] == 168) return false;
+                if (bytes[0] == 169 && bytes[1] == 254) return false;
+            }
+        }
+        else if (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public static void MapSourceEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/sources").WithTags("Sources");
 
         group.MapGet("/", GetSources)
             .WithName("GetSources")
-            .WithDescription("Get all sources, optionally filtered by domain");
+            .WithDescription("Get all sources, optionally filtered by domain")
+            .AllowAnonymous();
 
         group.MapGet("/{id:guid}", GetSource)
             .WithName("GetSource")
-            .WithDescription("Get a source by ID");
+            .WithDescription("Get a source by ID")
+            .AllowAnonymous();
 
         group.MapPost("/", AddSource)
             .WithName("AddSource")
-            .WithDescription("Add a new source to monitor");
+            .WithDescription("Add a new source to monitor")
+            .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteSource)
             .WithName("DeleteSource")
-            .WithDescription("Delete a source");
+            .WithDescription("Delete a source")
+            .RequireAuthorization();
 
-        group.MapPost("/{id:guid}/check", TriggerCheck)
-            .WithName("TriggerCheck")
-            .WithDescription("Trigger an immediate check for a source");
     }
 
     private static async Task<IResult> GetSources(
@@ -56,6 +91,13 @@ public static class SourceEndpoints
         ISourceRepository sourceRepo,
         CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request.Url))
+            return Results.BadRequest(new { error = "URL is required." });
+        if (string.IsNullOrWhiteSpace(request.Domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+        if (!IsValidPublicUrl(request.Url))
+            return Results.BadRequest(new { error = "URL must be a valid public HTTP(S) URL. Private/loopback addresses are not allowed." });
+
         var source = new Source
         {
             Url = request.Url,
@@ -79,17 +121,6 @@ public static class SourceEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> TriggerCheck(
-        Guid id,
-        ISourceRepository sourceRepo,
-        CancellationToken ct)
-    {
-        var source = await sourceRepo.GetByIdAsync(id, ct);
-        if (source is null) return Results.NotFound();
-
-        // TODO: Queue actual check via background worker
-        return Results.Accepted(value: new { message = $"Check triggered for source {id}", sourceId = id });
-    }
 }
 
 public record AddSourceRequest(

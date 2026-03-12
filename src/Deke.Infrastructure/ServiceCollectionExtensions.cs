@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Infrastructure.Data;
 using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;
@@ -7,6 +7,7 @@ using Deke.Infrastructure.Llm;
 using Deke.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace Deke.Infrastructure;
 
@@ -15,8 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDekeInfrastructure(this IServiceCollection services, string connectionString)
     {
         DapperConfig.Initialize();
-        var dataSource = DapperConfig.CreateDataSource(connectionString);
-        services.AddSingleton(dataSource);
+        services.AddSingleton<NpgsqlDataSource>(_ => DapperConfig.CreateDataSource(connectionString));
         services.AddSingleton<DbConnectionFactory>();
 
         // Repositories

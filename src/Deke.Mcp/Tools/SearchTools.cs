@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -72,7 +72,7 @@ public class SearchTools
 
         foreach (var result in results)
         {
-            var entry = $"- **[{result.Confidence:F0}% confidence]** {result.Content}\n";
+            var entry = $"- **[{result.Confidence:P0} confidence]** {result.Content}\n";
 
             // Rough token estimate: ~4 chars per token
             if ((sb.Length + entry.Length) / 4 > maxTokens)

@@ -1,4 +1,4 @@
-namespace Deke.Core.Interfaces;
+﻿namespace Deke.Core.Interfaces;
 
 public interface ILlmService
 {

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
@@ -12,19 +12,23 @@ public static class FactEndpoints
 
         group.MapGet("/{id:guid}", GetFact)
             .WithName("GetFact")
-            .WithDescription("Get a fact by ID");
+            .WithDescription("Get a fact by ID")
+            .AllowAnonymous();
 
         group.MapGet("/domain/{domain}", GetFactsByDomain)
             .WithName("GetFactsByDomain")
-            .WithDescription("Get all facts for a domain");
+            .WithDescription("Get all facts for a domain")
+            .AllowAnonymous();
 
         group.MapPost("/", AddFact)
             .WithName("AddFact")
-            .WithDescription("Add a new fact with auto-generated embedding");
+            .WithDescription("Add a new fact with auto-generated embedding")
+            .RequireAuthorization();
 
         group.MapGet("/stats/{domain}", GetStats)
             .WithName("GetStats")
-            .WithDescription("Get fact statistics for a domain");
+            .WithDescription("Get fact statistics for a domain")
+            .AllowAnonymous();
     }
 
     private static async Task<IResult> GetFact(
@@ -39,10 +43,15 @@ public static class FactEndpoints
     private static async Task<IResult> GetFactsByDomain(
         string domain,
         int limit = 100,
-        IFactRepository? factRepo = null,
+        IFactRepository factRepo = null!,
         CancellationToken ct = default)
     {
-        var facts = await factRepo!.GetByDomainAsync(domain, limit, ct);
+        if (string.IsNullOrWhiteSpace(domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+
+        limit = Math.Clamp(limit, 1, 500);
+
+        var facts = await factRepo.GetByDomainAsync(domain, limit, ct);
         return Results.Ok(facts);
     }
 
@@ -52,6 +61,11 @@ public static class FactEndpoints
         IEmbeddingService embeddings,
         CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request.Content))
+            return Results.BadRequest(new { error = "Content is required." });
+        if (string.IsNullOrWhiteSpace(request.Domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+
         var fact = new Fact
         {
             Content = request.Content,

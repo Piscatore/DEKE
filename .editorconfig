@@ -1,0 +1,62 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+charset = utf-8-bom
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{csproj,props,targets,json,yml,yaml}]
+indent_size = 2
+
+[*.cs]
+# Namespace preferences
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Constants: PascalCase (must be defined before private fields rule)
+dotnet_naming_rule.constants_should_be_pascal_case.severity = warning
+dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
+dotnet_naming_rule.constants_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.applicable_accessibilities = *
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# Static readonly fields: PascalCase
+dotnet_naming_rule.static_readonly_should_be_pascal_case.severity = warning
+dotnet_naming_rule.static_readonly_should_be_pascal_case.symbols = static_readonly
+dotnet_naming_rule.static_readonly_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_symbols.static_readonly.applicable_kinds = field
+dotnet_naming_symbols.static_readonly.applicable_accessibilities = private, private_protected
+dotnet_naming_symbols.static_readonly.required_modifiers = static, readonly
+
+# Private instance field naming: _camelCase
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
+dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_underscore
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private, private_protected
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.camel_case_underscore.required_prefix = _
+dotnet_naming_style.camel_case_underscore.capitalization = camel_case
+
+# Use 'var' when type is apparent
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+# Prefer expression bodies
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_constructors = when_on_single_line:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+# Organize usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
