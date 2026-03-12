@@ -75,6 +75,34 @@ Write endpoints (POST, DELETE) require an API key via the `X-Api-Key` header. Fo
 - **Documentation**: Tutorials, example use cases
 - **Performance**: Embedding generation caching, query optimization
 
+## Claude Code Setup (Recommended)
+
+DEKE is developed with [Claude Code](https://claude.com/claude-code). If you use it, here's the tooling we've found most useful.
+
+### MCP Servers
+
+| Server | What it does | Install |
+|--------|-------------|---------|
+| [Postgres MCP](https://github.com/crystaldba/postgres-mcp) | Schema introspection, query analysis, index suggestions | `pip install postgres-mcp` |
+| [Microsoft Learn](https://learn.microsoft.com/api/mcp) | Real-time .NET / ASP.NET / EF Core docs | HTTP MCP endpoint |
+| [NuGet MCP](https://devblogs.microsoft.com/dotnet/nuget-mcp-server-preview) | Package discovery, vulnerability scanning | `dnx NuGet.Mcp.Server` |
+| [Docker MCP](https://github.com/ckreiling/mcp-server-docker) | Container lifecycle management | `uvx mcp-server-docker` |
+
+### Plugins
+
+| Plugin | What it does |
+|--------|-------------|
+| [.NET Claude Kit](https://codewithmukesh.com/resources/dotnet-claude-kit) | 47 skills, Roslyn analysis, slash commands (`/build-fix`, `/tdd`, `/code-review`) |
+| [Serena](https://github.com/maks-ivanov/serena) | Semantic code navigation and symbol-level editing |
+
+### Adding DEKE as MCP Server
+
+To use DEKE's own knowledge base from Claude Code:
+
+```bash
+claude mcp add deke -- dotnet run --project src/Deke.Mcp
+```
+
 ## Questions?
 
 Open an issue — happy to help!
