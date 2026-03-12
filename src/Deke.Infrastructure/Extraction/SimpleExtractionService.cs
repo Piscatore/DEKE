@@ -1,11 +1,11 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
 namespace Deke.Infrastructure.Extraction;
 
 public class SimpleExtractionService : IExtractionService
 {
-    private static readonly string[] _sentenceSeparators = [". ", "! ", "? ", "\n"];
+    private static readonly string[] SentenceSeparators = [". ", "! ", "? ", "\n"];
 
     public Task<List<ExtractedFact>> ExtractFactsAsync(
         string content,
@@ -13,7 +13,7 @@ public class SimpleExtractionService : IExtractionService
         string? sourceContext = null,
         CancellationToken ct = default)
     {
-        var sentences = content.Split(_sentenceSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var sentences = content.Split(SentenceSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         var facts = sentences
             .Where(s => s.Length >= 20 && s.Length <= 500)

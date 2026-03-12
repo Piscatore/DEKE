@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 

@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Infrastructure.Data;
 using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;

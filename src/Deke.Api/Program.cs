@@ -1,4 +1,4 @@
-using Deke.Api.Auth;
+﻿using Deke.Api.Auth;
 using Deke.Api.Endpoints;
 using Deke.Infrastructure;
 using Microsoft.AspNetCore.Authentication;

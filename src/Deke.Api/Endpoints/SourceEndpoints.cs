@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
 

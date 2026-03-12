@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
 using Deke.Infrastructure.Data;

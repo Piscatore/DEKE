@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Dapper;
 using Dapper.FastCrud;
 using Deke.Core.Models;

@@ -1,4 +1,4 @@
-namespace Deke.Infrastructure.Embeddings;
+﻿namespace Deke.Infrastructure.Embeddings;
 
 public class EmbeddingsConfig
 {

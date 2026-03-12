@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Text.Json;
 using Dapper;
 using Npgsql;
@@ -8,7 +8,7 @@ namespace Deke.Infrastructure.Data.TypeHandlers;
 
 public class JsonbTypeHandler<T> : SqlMapper.TypeHandler<T> where T : class
 {
-    private static readonly JsonSerializerOptions _options = new()
+    private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
@@ -16,7 +16,7 @@ public class JsonbTypeHandler<T> : SqlMapper.TypeHandler<T> where T : class
 
     public override void SetValue(IDbDataParameter parameter, T? value)
     {
-        parameter.Value = value is null ? DBNull.Value : JsonSerializer.Serialize(value, _options);
+        parameter.Value = value is null ? DBNull.Value : JsonSerializer.Serialize(value, Options);
         parameter.DbType = DbType.String;
         if (parameter is NpgsqlParameter npgsqlParam)
         {
@@ -30,6 +30,6 @@ public class JsonbTypeHandler<T> : SqlMapper.TypeHandler<T> where T : class
             return default;
 
         var json = value.ToString()!;
-        return JsonSerializer.Deserialize<T>(json, _options);
+        return JsonSerializer.Deserialize<T>(json, Options);
     }
 }

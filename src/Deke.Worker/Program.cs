@@ -1,4 +1,4 @@
-using Deke.Infrastructure;
+﻿using Deke.Infrastructure;
 using Deke.Worker.Services;
 using Serilog;
 
