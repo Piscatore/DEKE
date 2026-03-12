@@ -6,6 +6,10 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Local overrides (gitignored)
+var env = builder.Environment;
+builder.Configuration.AddJsonFile($"appsettings.{env.EnvironmentName}.local.json", optional: true, reloadOnChange: true);
+
 // Serilog
 builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration));
