@@ -10,8 +10,8 @@
 ## Quick Start
 
 ```bash
-# Start PostgreSQL with pgvector
-docker-compose up -d
+# Start PostgreSQL with pgvector (if using container)
+podman-compose up -d
 
 # Build solution
 dotnet build
@@ -90,7 +90,7 @@ Custom Dapper type handlers are registered in `DapperConfig.Initialize()`:
 
 ### Schema Management
 
-Schema is defined in `init.sql` (runs on first Docker container start).
+Schema is defined in `init.sql` (runs on first container start, or apply manually for local PostgreSQL).
 For schema changes, update `init.sql` and apply manually or recreate the container.
 
 ### Embedding Generation

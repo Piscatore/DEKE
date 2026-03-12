@@ -18,6 +18,8 @@ public class FactRepository : IFactRepository
         entities, metadata, created_at, updated_at, is_outdated, outdated_reason
         """;
 
+    private const string SelectAllColumns = SelectColumnsNoEmbedding + ", embedding";
+
     public async Task<Fact?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var conn = await _db.CreateConnectionAsync(ct);
@@ -167,7 +169,7 @@ public class FactRepository : IFactRepository
         await using var conn = await _db.CreateConnectionAsync(ct);
         var results = await conn.QueryAsync<Fact>(
             $"""
-            SELECT {SelectColumnsNoEmbedding} FROM facts
+            SELECT {SelectAllColumns} FROM facts
             WHERE domain = @domain
               AND created_at >= NOW() - @interval::interval
             ORDER BY created_at DESC
@@ -182,7 +184,7 @@ public class FactRepository : IFactRepository
         await using var conn = await _db.CreateConnectionAsync(ct);
         var results = await conn.QueryAsync<Fact>(
             $"""
-            SELECT {SelectColumnsNoEmbedding} FROM facts f
+            SELECT {SelectAllColumns} FROM facts f
             WHERE f.domain = @domain
               AND NOT EXISTS (
                   SELECT 1 FROM fact_relations fr

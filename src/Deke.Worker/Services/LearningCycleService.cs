@@ -25,6 +25,10 @@ public class LearningCycleService : BackgroundService
             {
                 await MapRelationsAsync(stoppingToken);
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in learning cycle");

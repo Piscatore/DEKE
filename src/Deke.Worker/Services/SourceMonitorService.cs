@@ -25,6 +25,10 @@ public class SourceMonitorService : BackgroundService
             {
                 await CheckSourcesAsync(stoppingToken);
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in source monitoring cycle");

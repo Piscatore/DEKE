@@ -9,7 +9,7 @@ public static class SearchEndpoints
 {
     public static void MapSearchEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/search").WithTags("Search");
+        var group = app.MapGroup("/api/search").WithTags("Search").AllowAnonymous();
 
         group.MapGet("/", SearchFacts)
             .WithName("SearchFacts")
@@ -25,13 +25,21 @@ public static class SearchEndpoints
         string domain,
         int limit = 10,
         float minSimilarity = 0.5f,
-        IFactRepository? factRepo = null,
-        IEmbeddingService? embeddings = null,
+        IFactRepository factRepo = null!,
+        IEmbeddingService embeddings = null!,
         CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(query))
+            return Results.BadRequest(new { error = "Query is required." });
+        if (string.IsNullOrWhiteSpace(domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+
+        limit = Math.Clamp(limit, 1, 500);
+        minSimilarity = Math.Clamp(minSimilarity, 0f, 1f);
+
         var sw = Stopwatch.StartNew();
-        var embedding = embeddings!.GenerateEmbedding(query);
-        var results = await factRepo!.SearchAsync(embedding, domain, limit, minSimilarity, ct);
+        var embedding = embeddings.GenerateEmbedding(query);
+        var results = await factRepo.SearchAsync(embedding, domain, limit, minSimilarity, ct);
         sw.Stop();
 
         return Results.Ok(new SearchResponse
@@ -48,12 +56,19 @@ public static class SearchEndpoints
         string topic,
         string domain,
         int maxTokens = 2000,
-        IFactRepository? factRepo = null,
-        IEmbeddingService? embeddings = null,
+        IFactRepository factRepo = null!,
+        IEmbeddingService embeddings = null!,
         CancellationToken ct = default)
     {
-        var embedding = embeddings!.GenerateEmbedding(topic);
-        var facts = await factRepo!.SearchAsync(embedding, domain, limit: 30, minSimilarity: 0.4f, ct);
+        if (string.IsNullOrWhiteSpace(topic))
+            return Results.BadRequest(new { error = "Topic is required." });
+        if (string.IsNullOrWhiteSpace(domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+
+        maxTokens = Math.Clamp(maxTokens, 100, 10000);
+
+        var embedding = embeddings.GenerateEmbedding(topic);
+        var facts = await factRepo.SearchAsync(embedding, domain, limit: 30, minSimilarity: 0.4f, ct);
 
         var sb = new StringBuilder();
         sb.AppendLine($"## Domain Knowledge: {domain}");

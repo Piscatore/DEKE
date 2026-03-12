@@ -25,7 +25,12 @@ public class RssHarvester : IHarvester
             var client = _httpClientFactory.CreateClient();
             var response = await client.GetStringAsync(source.Url, ct);
 
-            using var reader = XmlReader.Create(new StringReader(response));
+            var xmlSettings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null
+            };
+            using var reader = XmlReader.Create(new StringReader(response), xmlSettings);
             var feed = SyndicationFeed.Load(reader);
 
             var extractedTexts = new List<string>();

@@ -25,6 +25,10 @@ public class PatternDiscoveryService : BackgroundService
             {
                 await DiscoverPatternsAsync(stoppingToken);
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in pattern discovery cycle");
@@ -68,11 +72,11 @@ public class PatternDiscoveryService : BackgroundService
 
                 // Build similarity clusters using union-find approach
                 var clusters = BuildClusters(recentFacts, embeddingService);
+                var existingPatterns = await patternRepo.GetActiveByDomainAsync(domain, ct);
 
                 var patternsDiscovered = 0;
                 foreach (var cluster in clusters.Where(c => c.Count >= 3))
                 {
-                    var existingPatterns = await patternRepo.GetActiveByDomainAsync(domain, ct);
                     var clusterIds = cluster.Select(f => f.Id).ToHashSet();
 
                     // Check if a pattern already covers these facts
