@@ -70,10 +70,12 @@ postgres-data/
 
 # Claude Code / Agent local state
 .agents/
-.claude/
 .serena/
 .mcp.json
 skills-lock.json
+
+# RPI framework - keep structure, ignore generated content
+thoughts/shared/**/*.md
 
 # Archive files
 *.zip
