@@ -10,6 +10,7 @@ using Deke.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Polly;
 
@@ -55,7 +56,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHarvester, RssHarvester>();
         services.AddScoped<IHarvester, WebPageHarvester>();
         services.AddScoped<IExtractionService, SimpleExtractionService>();
-        services.AddSingleton<ILlmService, NoOpLlmService>();
         return services;
     }
 
@@ -86,6 +86,31 @@ public static class ServiceCollectionExtensions
 
             options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddDekeLlm(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        var config = new LlmConfig();
+        configuration.GetSection("Llm").Bind(config);
+        services.AddSingleton(config);
+
+        switch (config.Provider)
+        {
+            case LlmProvider.Gemini:
+                services.AddHttpClient<ILlmService, GeminiLlmService>();
+                break;
+
+            case LlmProvider.OpenAi:
+                services.AddHttpClient<ILlmService, OpenAiLlmService>();
+                break;
+
+            default:
+                services.AddSingleton<ILlmService, NoOpLlmService>();
+                break;
+        }
 
         return services;
     }
