@@ -196,4 +196,17 @@ public class FactRepository : IFactRepository
             new { domain, limit });
         return results.AsList();
     }
+
+    public async Task<List<DomainStats>> GetDomainStatsAsync(CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var results = await conn.QueryAsync<DomainStats>(
+            """
+            SELECT domain, COUNT(*) as fact_count, MAX(created_at) as last_updated_at
+            FROM facts
+            WHERE NOT is_outdated
+            GROUP BY domain
+            """);
+        return results.AsList();
+    }
 }

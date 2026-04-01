@@ -29,6 +29,10 @@ public static class DapperConfig
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<TermContext>>());
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<Dictionary<string, string>>());
 
+        // Federation type handlers
+        SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<PeerDomainInfo>>());
+        SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<string>>());
+
         // Register UUID[] type handler
         SqlMapper.AddTypeHandler(new GuidArrayTypeHandler());
 
