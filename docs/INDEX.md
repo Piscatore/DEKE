@@ -15,10 +15,9 @@ This index provides a navigable overview of all DEKE project documentation.
 
 | Document | Type | Description |
 |----------|------|-------------|
-| [overview.md](product/overview.md) | Living | Vision, problem statement, three-package architecture, design principles |
-| [knowledge-base.md](product/knowledge-base.md) | Living | Package 1: knowledge ingestion, search, quality, trust framework |
-| [knowledge-leverage.md](product/knowledge-leverage.md) | Living | Package 2: advisory pipeline, domain adapters, confidence expression |
-| [evolution-engine.md](product/evolution-engine.md) | Living | Package 3: prediction-error learning, curiosity, adapter evolution |
+| [overview.md](product/overview.md) | Living | Vision, problem statement, two-package architecture, design principles |
+| [knowledge-base.md](product/knowledge-base.md) | Living | Knowledge ingestion, search, quality, trust framework |
+| [knowledge-leverage.md](product/knowledge-leverage.md) | Living | Advisory pipeline, domain adapters, confidence expression |
 | [glossary.md](product/glossary.md) | Living | Domain terms and definitions |
 
 ## Architecture — How It Is Built
@@ -38,6 +37,7 @@ This index provides a navigable overview of all DEKE project documentation.
 | [reinforcement-learning.md](science/reinforcement-learning.md) | Reference | TD learning, Goodhart's Law, curiosity, quality-diversity algorithms |
 | [retrieval-theory.md](science/retrieval-theory.md) | Reference | Chunking, hybrid search, re-ranking, query transformation theory |
 | [papers.md](science/papers.md) | Reference | Curated bibliography organized by topic |
+| [evolution-vision.md](science/evolution-vision.md) | Reference | Research vision for self-improving advisory quality (deferred from product) |
 
 ## Planning
 
@@ -57,10 +57,9 @@ DEKE/
     ├── INDEX.md                        This file
     ├── roadmap.md                      Implementation phases and milestones
     ├── product/                        "What" — system model and behavior
-    │   ├── overview.md                 Vision and three-package architecture
-    │   ├── knowledge-base.md           Package 1: knowledge integrity
-    │   ├── knowledge-leverage.md       Package 2: advisory responses
-    │   ├── evolution-engine.md         Package 3: self-improvement
+    │   ├── overview.md                 Vision and two-package architecture
+    │   ├── knowledge-base.md           Knowledge integrity
+    │   ├── knowledge-leverage.md       Advisory responses
     │   └── glossary.md                 Domain terms
     ├── architecture/                   "How" — design and implementation
     │   ├── specification.md            Technical specification
@@ -71,7 +70,8 @@ DEKE/
         ├── neuroevolution.md           Evolution strategies and frameworks
         ├── reinforcement-learning.md   TD learning, Goodhart's Law, curiosity
         ├── retrieval-theory.md         Retrieval science and techniques
-        └── papers.md                   Paper bibliography
+        ├── papers.md                   Paper bibliography
+        └── evolution-vision.md         Evolution Engine research vision
 ```
 
 ## Document Classifications

@@ -1,8 +1,8 @@
-﻿# Knowledge Base (Package 1 --- Knowledge Integrity)
+﻿# Knowledge Base
 
 ## Purpose
 
-The Knowledge Base is the inward-facing package of DEKE. Its sole concern is the quality of what is stored. It ingests knowledge from external sources, organises it, tracks its provenance, assesses its trustworthiness, and makes it retrievable. It does not serve advisory responses (that is Package 2) and it does not learn from outcomes (that is Package 3). Its direction is always inward: making the stored knowledge more accurate, better sourced, and more richly connected.
+The Knowledge Base is the inward-facing core of DEKE. Its sole concern is the quality of what is stored. It ingests knowledge from external sources, organises it, tracks its provenance, assesses its trustworthiness, and makes it retrievable. Its direction is always inward: making the stored knowledge more accurate, better sourced, and more richly connected.
 
 ## Core Capabilities
 
@@ -22,51 +22,43 @@ The Knowledge Base provides five foundational capabilities:
 
 What distinguishes DEKE from a simple fact store is its commitment to knowledge quality. Every fact carries metadata that describes not just what it says, but how much it should be trusted.
 
-### Provenance Tracking
+### Source Credibility
 
-Every fact in DEKE maintains a complete lineage: the source it came from, the credibility of that source, when the fact was collected, how it was extracted, and when it was last verified. Source credibility and fact confidence are tracked independently --- a fact extracted from a high-credibility source can still be ambiguous, and a fact from an unverified source can be corroborated by multiple independent sources.
+Every source registered in DEKE carries a credibility score. This score is tracked independently from any individual fact --- it reflects the overall reliability of the source based on its history. A high-credibility source produces facts that start with higher baseline confidence; a low-credibility or unverified source produces facts that require additional signals before they are fully trusted.
 
-### Corroboration
+### Fact Confidence
 
-The number of independent sources asserting the same or equivalent claim is tracked automatically. When a new fact is ingested, DEKE searches for semantically equivalent existing facts. If the new fact comes from a genuinely independent source (not a reprint or syndication), the corroboration count increments. Higher corroboration means higher confidence. Source independence is tracked to prevent single-source amplification.
-
-### Contradiction Detection
-
-When a new fact closely matches an existing fact in meaning but asserts an opposing claim, both facts are flagged as contested. Neither is deleted. The conflict enters a review queue. Resolution options include accepting the newer fact, accepting the one with higher corroboration, or producing a synthesised fact that acknowledges both positions.
+Each fact has a confidence score computed from two inputs: the credibility of the source it came from and its recency. A fact from a highly credible source that was recently verified has high confidence. A fact from an unverified source or one that has not been checked in a long time has lower confidence. Confidence is a continuous value, not a binary state.
 
 ### Temporal Validity
 
 Facts carry optional validity windows: when they became true and when they ceased to be true. This is critical for domains where knowledge evolves --- a regulatory requirement that changed, a software pattern that was superseded, or a seasonal condition that is time-bounded. Temporal validity enables DEKE to answer "what was true on date X" queries and to flag stale facts for re-verification.
 
-### Trust States
+### Deduplication
 
-Every fact passes through a lifecycle of trust states: unscored, accepted, flagged, contested, or rejected. These states are independent of ingestion order and are governed by domain trust policies.
-
-## Deduplication
-
-DEKE applies deduplication at five progressively sophisticated levels:
+DEKE applies deduplication at three levels during ingestion:
 
 1. **URL-level.** The same source URL, after normalisation, produces only one fact.
 2. **Content hash.** Byte-identical content from different URLs is recognised as the same fact.
 3. **Normalised hash.** Whitespace, encoding, and punctuation variations of identical content are collapsed.
-4. **Near-duplicate.** Content with approximately eighty percent or greater textual overlap --- such as wire-service reprints --- is identified as a near-duplicate.
-5. **Semantic.** Content that conveys the same meaning in different words is identified through embedding similarity as a semantic duplicate.
 
-The first three levels run immediately at ingestion. The fourth and fifth levels run asynchronously to avoid slowing the ingestion pipeline. A fact can enter the store in a pending state and transition to accepted once all deduplication levels have cleared.
+These three levels run immediately at ingestion, preventing duplicates from entering the store.
 
-## Domain Trust Policies
+### Planned Enhancements
 
-Different domains have different standards for what constitutes trustworthy knowledge. A casual hobby domain can auto-accept facts from any source. A legally critical domain may require multiple independent primary sources and human curation before a fact is accepted.
+The following capabilities extend the quality framework and are planned for future phases:
 
-Domain trust policies are configurable per domain and govern:
+- **Corroboration tracking.** The number of independent sources asserting the same or equivalent claim is tracked automatically. When a new fact is ingested, DEKE searches for semantically equivalent existing facts and increments the corroboration count for genuinely independent sources. Higher corroboration means higher confidence.
 
-- Which source tiers are auto-accepted and which require review.
-- The minimum corroboration count before auto-acceptance.
-- Whether temporal validity metadata is required.
-- The minimum confidence score below which facts enter the review queue.
-- Whether only primary sources are accepted without review.
+- **Contradiction detection.** When a new fact closely matches an existing fact in meaning but asserts an opposing claim, both facts are flagged as contested. Neither is deleted. The conflict enters a review queue with resolution options including accepting the newer fact, accepting the one with higher corroboration, or producing a synthesised fact that acknowledges both positions.
 
-This trust gradient allows the same infrastructure to serve both casual and high-stakes domains without compromise in either direction.
+- **Trust states lifecycle.** Every fact passes through a lifecycle of trust states: unscored, accepted, flagged, contested, or rejected. These states are independent of ingestion order and are governed by domain trust policies.
+
+- **Domain trust policies.** Per-domain configuration governing which source tiers are auto-accepted, minimum corroboration counts, whether temporal validity metadata is required, minimum confidence thresholds, and whether only primary sources are accepted without review.
+
+- **Near-duplicate detection (dedup level 4).** Content with approximately eighty percent or greater textual overlap --- such as wire-service reprints --- is identified using techniques like MinHash or SimHash. This level runs asynchronously to avoid slowing the ingestion pipeline.
+
+- **Semantic deduplication (dedup level 5).** Content that conveys the same meaning in different words is identified through embedding similarity. This level also runs asynchronously.
 
 ## Planned Capabilities
 
