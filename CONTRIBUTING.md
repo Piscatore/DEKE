@@ -4,8 +4,8 @@ Thanks for your interest in contributing! Here's how to get started.
 
 ## Local Setup
 
-1. **Prerequisites**: .NET 9 SDK, PostgreSQL 16 with pgvector (local install or via container)
-2. **Start the database** (if using a container): `podman-compose up -d`
+1. **Prerequisites**: .NET 9 SDK, Podman (for PostgreSQL container)
+2. **Start the database**: `podman machine start && podman compose -f podman-compose.yml up -d`
 3. **Download the embedding model**: `./scripts/download-model.sh` (~100 MB)
 4. **Configure local settings** (see below)
 5. **Build**: `dotnet build`
@@ -14,7 +14,9 @@ Thanks for your interest in contributing! Here's how to get started.
 
 ### Database Options
 
-**Container** (easiest): `podman-compose up -d` starts PostgreSQL with pgvector using default credentials. No extra configuration needed — `appsettings.Development.json` matches the container defaults.
+**Container** (recommended): `podman compose -f podman-compose.yml up -d` starts PostgreSQL 16 with pgvector on port **5433**. The default `appsettings.json` connection strings match the container credentials (`deke`/`deke`). Data is persisted in a named Podman volume (`deke-postgres-data`).
+
+If this is your first time, initialize the Podman machine first: `podman machine init && podman machine start`.
 
 **Local PostgreSQL**: If you have PostgreSQL installed locally, ensure the `pgvector` extension is available and apply the schema:
 
