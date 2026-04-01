@@ -1,80 +1,67 @@
 # Roadmap
 
-This document summarizes the implementation phases across all three packages. For detailed design, see the [architecture](architecture/) branch. For what each package delivers, see the [product](product/) branch.
+## Current State
 
-## Current Status
+What DEKE delivers today:
 
-| Package | Status | Details |
-|---------|--------|---------|
-| Package 1: Knowledge Base | v1 complete | Core INGEST-LEARN-SERVE pipeline operational |
-| Federation | Phase 1-2 complete | Discovery, manifest, federated search, MCP tools |
-| Package 2: Knowledge Leverage | In design | Advisory pipeline, domain adapters |
-| Package 3: Evolution Engine | In design | Three-signal framework, prediction-error learning |
+| Capability | Status |
+|---|---|
+| **Knowledge Base (v1)** | Fact ingestion from RSS feeds and web pages. Semantic search via 384-dim embeddings (pgvector). Source monitoring on schedule. Pattern discovery. Relation mapping. Basic deduplication (URL + content hash). |
+| **REST API** | Facts CRUD, source CRUD, semantic search (POST), federation endpoints. |
+| **MCP Tools** | `consult_domain_expert` (federated search), `get_context` (LLM-formatted context), `list_available_domains` (local + peer domains). |
+| **Federation (Phase 1--2)** | Peer discovery via manifest. Federated search with delegation, provenance tracking, loop prevention, and locality-weighted scoring. |
+| **Background Services** | Source monitor (15 min), pattern discovery (1 hr), learning cycle (2 hr), peer health check (5 min). |
+| **Infrastructure** | .NET 9, PostgreSQL 16 + pgvector, ONNX embeddings (all-MiniLM-L6-v2), Dapper, Polly resilience. |
 
-## Implementation Sequence
+**Not yet built**: advisory pipeline, domain adapters, trust layer, semantic chunking, LLM-generated responses.
 
-Phases are ordered by dependency and value delivery. Package 1 Phase 1 (provenance schema) is the critical path for everything downstream.
+## MVP Target
 
-### Package 1: Knowledge Base
+The first meaningful milestone: DEKE answering domain questions better than a language model alone, with cited and confidence-scored facts.
 
-| Phase | Name | Scope | Status |
-|-------|------|-------|--------|
-| P1-0 | Foundation | Core pipeline: ingest, search, serve | Complete |
-| P1-1 | Provenance Core | Source credibility, temporal validity, corroboration, contradiction flag, fact versioning | Planned |
-| P1-2 | Quality Pipeline | 5-level deduplication, trust scoring, domain trust policies, review queue | Planned |
-| P1-3 | Structure | Typed relations, dynamic taxonomy, terminology, entity awareness | Planned |
-| P1-4 | Expertise | Inference engine, gap analysis, health monitoring, self-assessment | Planned |
-| P1-5 | Advanced | Curator workflows, emergent schema, methodology learning, multilingual | Planned |
+| # | Work Item | Scope | Label |
+|---|-----------|-------|-------|
+| 1 | **Simplified trust layer** | Add `credibility_score` to sources, `confidence_score` to facts, optional `valid_from`/`valid_until` on facts. Schema migration + scoring function. | knowledge-base |
+| 2 | **Semantic chunking (R1)** | Integrate SemanticChunker.NET. Replace single-fact extraction with semantically coherent chunks. | knowledge-base |
+| 3 | **Advisory contracts (P2-1)** | AdvisoryRequest, AdvisoryResponse, IAdvisoryAdapter, ConfidenceBand, DefaultAdvisoryAdapter. Compile-only milestone. | knowledge-leverage |
+| 4 | **Advisory pipeline (P2-2)** | 7-stage pipeline: validate, retrieve, assemble context, construct prompt, call model, assemble response, log. Anthropic API integration. | knowledge-leverage |
+| 5 | **Software Product Advisor (P2-3)** | First domain adapter. Custom system prompt, fact weighting, version-aware context. Domain activation. | knowledge-leverage |
+| 6 | **GetDomainAdvice MCP tool (P2-4)** | MCP tool exposing advisory pipeline to Claude Code. | knowledge-leverage |
+| 7 | **Bootstrap ingestion** | Ingest DEKE design session history into Software Product Advisor domain. Primary-source, high-confidence seed content. | knowledge-base |
+| 8 | **Interaction logging** | Log every advisory interaction (query, cited facts, model used, confidence). Data capture for future analysis. No learning loop yet. | knowledge-leverage |
 
-### Package 2: Knowledge Leverage
+## Next Priorities
 
-| Phase | Name | Scope | Prerequisites |
-|-------|------|-------|---------------|
-| P2-1 | Core Contracts | AdvisoryRequest, AdvisoryResponse, IAdvisoryAdapter, DefaultAdapter | None |
-| P2-2 | Advisory Pipeline | Full 13-stage pipeline, LLM integration, Package 3 event emission | P2-1, P1-1 |
-| P2-3 | Software Product Advisor | First domain adapter, bootstrap ingestion | P2-2 |
-| P2-4 | MCP Tool | GetDomainAdvice tool for Claude Code | P2-3 |
-| P2-5 | Package 3 Integration | Live adapter fitness reads, domain health signals | P2-2, P3-1, P3-2 |
-| P2-6 | Ollama + Multi-domain | Local model backend, second domain | P2-5 |
+After MVP, in rough priority order:
 
-### Package 3: Evolution Engine
+- **Hybrid search (R2)** — Add BM25 alongside vector search for keyword-heavy queries.
+- **Cross-encoder re-ranking (R4)** — Re-score top-N candidates with a local cross-encoder model.
+- **Full trust framework** — Corroboration tracking, contradiction detection, trust states lifecycle, domain trust policies, 5-level deduplication.
+- **PDF and Markdown ingestion (R5)** — Extend harvesters to PDF and Markdown sources.
+- **Multi-domain** — Second domain adapter, domain activation auto-monitoring.
 
-| Phase | Name | Scope | Prerequisites |
-|-------|------|-------|---------------|
-| P3-1 | Signal Infrastructure | Interaction logging, feedback capture, trajectory data | P2 v1 |
-| P3-2 | Prediction Model | Quality prediction, delta computation, backward propagation | P3-1, P1-1 |
-| P3-3 | Curiosity Service | Self-query loop, gap taxonomy, harvest directives | P3-2, P1-2 |
-| P3-4 | Hindsight Loop | Delayed probes, three-signal triangulation | P3-2 |
-| P3-5 | Adapter Evolution | MAP-Elites archive, GEPA-derived mutation, shadow mode | P3-2, P2 adapters |
-| P3-6 | Cross-Domain Transfer | Delta sharing, adapter transfer, compound prediction | P3-5, multiple domains |
+## Future
 
-### Federation
+- **Federation Phase 4** — Bulk replication for cross-instance knowledge sync.
+- **Federation Phase 5** — Security hardening (mutual TLS, per-peer authorization).
+- **Local LLM backend** — Ollama integration for zero-cost advisory in mature domains.
+- **Structure layer** — Typed relations, dynamic taxonomy, terminology database, entity awareness.
+- **Expertise layer** — Inference engine, gap analysis, health monitoring, self-assessment.
 
-| Phase | Name | Status |
-|-------|------|--------|
-| Phase 1 | Discovery and Manifest | Complete |
-| Phase 2 | Federated Search + MCP Tools | Complete |
-| Phase 4 | Bulk Replication | Planned |
-| Phase 5 | Security and Hardening | Planned |
+## Research Directions
 
-### Retrieval Pipeline
+These are intellectually interesting but require user volume and query data that do not currently exist. They are preserved as research for future exploration, not active development targets.
 
-| Phase | Name | Scope |
-|-------|------|-------|
-| R1 | Chunking Strategy | SemanticChunker.NET integration |
-| R2 | Hybrid Search | BM25 alongside vector search |
-| R3 | Re-Ranking | Cross-encoder re-ranking |
-| R4 | Query Transformation | Decomposition, HyDE |
-| R5 | Context Assembly | Coherent ordering, deduplication |
-| R6 | Evaluation | Automated quality metrics |
-| R7 | Ingestion Formats | PDF, Markdown, HTML |
-| R8 | Semantic Caching | Query result caching |
+- **Evolution Engine** — Self-improving advisory quality through prediction-error learning, three-signal feedback, and adapter evolution. See [science/evolution-vision.md](science/evolution-vision.md).
+- **Curiosity Service** — Self-directed knowledge acquisition driven by answerability prediction.
+- **Advanced retrieval** — Query expansion (R3), HNSW indexing (R6), embedding abstraction (R7), evaluation harness (R8).
 
-## First Milestone
+## Progress Log
 
-The first meaningful milestone is DEKE giving grounded software architecture advice via Claude Code MCP:
-
-- P1-1 complete (provenance schema)
-- P2-1 through P2-4 complete (advisory pipeline + MCP tool)
-- P3-1 complete (interaction logging from first advisory call)
-- Bootstrap ingestion of DEKE design session history
+| Date | Milestone | Notes |
+|---|---|---|
+| 2026-03 | Package 1 v1 | Core pipeline: ingest, search, serve. REST API + MCP. |
+| 2026-04 | Federation Phase 1 | Peer discovery, manifest endpoint, health monitoring. |
+| 2026-04 | Federation Phase 2 | Federated search, provenance, MCP tools. |
+| 2026-04 | Documentation overhaul | Three-branch doc structure (product/architecture/science). |
+| 2026-04 | Product checkpoint | Scope reduction: two-package model, simplified pipeline, MVP focus. |

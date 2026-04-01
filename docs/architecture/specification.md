@@ -529,24 +529,18 @@ Package 2 (Knowledge Leverage) transforms accumulated knowledge into grounded ad
 | Layer | Name | Responsibility |
 |-------|------|----------------|
 | Layer 1 | Fixed Interface | AdvisoryRequest in, AdvisoryResponse out. Never changes. REST API, MCP tool, future A2A -- all expose this contract. |
-| Layer 2 | Shared Core | Context assembly, trust metadata interpretation, confidence banding, uncertainty expression, LLM call mechanics, graceful degradation, Package 3 event emission. |
-| Layer 3 | Domain Adapter | Replaceable plugin: system prompt, fact weighting, context format, trust calibration, escalation rules. Domain-specific logic lives here only. |
+| Layer 2 | Shared Core | Context assembly, trust metadata interpretation, confidence banding, uncertainty expression, LLM call mechanics, graceful degradation. |
+| Layer 3 | Domain Adapter | Replaceable plugin: system prompt, fact weighting, context format, trust calibration. Domain-specific logic lives here only. |
 
-### Advisory Pipeline (13 stages)
+### Advisory Pipeline (7 stages)
 
 1. Request validation (domain exists and activated)
-2. Niche classification (query_type x stakes_level)
-3. Domain adapter resolution (IAdvisoryAdapter or DefaultAdvisoryAdapter)
-4. Fact retrieval (Package 1 semantic search with trust filters)
-5. Adapter-weighted ranking (domain-specific re-ranking)
-6. Quality prediction (predicted_quality_score from fact metadata)
-7. Context assembly (adapter.FormatContext)
-8. Trust calibration (adapter.CalibrateTrust)
-9. Prompt construction (system prompt + trust guidance + context + query)
-10. LLM call (Anthropic API or Ollama)
-11. Response assembly (wrap in AdvisoryResponse with ConfidenceBand)
-12. Escalation check (adapter.ShouldEscalate)
-13. Package 3 emission (AdvisoryInteractionEvent)
+2. Fact retrieval (semantic search with trust filters)
+3. Context assembly (adapter formats facts, translates trust metadata to guidance)
+4. Prompt construction (system prompt + trust guidance + context + query)
+5. Model call (dispatch to backend)
+6. Response assembly (confidence band, cited facts, knowledge gaps)
+7. Interaction logging
 
 ### IAdvisoryAdapter Interface
 
@@ -557,7 +551,6 @@ public interface IAdvisoryAdapter
     IReadOnlyList<KnowledgeFact> WeightFacts(IReadOnlyList<KnowledgeFact> facts, string query);
     string FormatContext(IReadOnlyList<KnowledgeFact> facts);
     string CalibrateTrust(TrustMetadata trustMetadata);
-    bool ShouldEscalate(string query, string draftResponse);
     DomainActivationCriteria ActivationCriteria { get; }
 }
 ```
@@ -580,7 +573,7 @@ The honesty constraint is enforced at the shared core level: no adapter can over
 | Backend | Condition |
 |---------|-----------|
 | claude-haiku-4-5 (Anthropic API) | Default. Selected when knowledge_depth_score >= 0.6 |
-| claude-sonnet-4-6 (Anthropic API) | ShouldEscalate() returns true, or ConfidenceBand = Low with High stakes, or explicit caller override |
+| claude-sonnet-4-6 (Anthropic API) | ConfidenceBand = Low with High stakes, or explicit caller override |
 | Ollama (local) | domain.AllowLocalModel = true AND knowledge_depth_score >= 0.75 |
 
 As the knowledge base deepens, the minimum capable model decreases -- the knowledge compensation principle.
@@ -604,8 +597,6 @@ public record AdvisoryResponse
     public ConfidenceBand Confidence { get; init; }
     public string[] CitedFactIds { get; init; } = [];
     public string[] KnowledgeGaps { get; init; } = [];
-    public bool WasEscalated { get; init; } = false;
-    public string? EscalationReason { get; init; }
     public bool ContainsConflictingEvidence { get; init; } = false;
     public AdvisoryMetadata Metadata { get; init; } = new();
 }
@@ -617,87 +608,7 @@ The `ContainsConflictingEvidence` field (from Guardrail G5) is set when Package 
 
 ## Package 3 Architecture
 
-Package 3 (Evolution Engine) makes DEKE self-improving. It does not generate responses or call LLMs -- it observes, measures, and directs improvement. For the neuroscience and QD algorithm foundations, see [science/evolution-theory.md](../science/evolution-theory.md).
-
-### Three-Signal Framework
-
-Package 3's core defense against Goodhart's Law. No single signal track can be maximized at the expense of true quality without the others detecting divergence.
-
-| Signal Track | Sources | Strength | Weakness |
-|-------------|---------|----------|----------|
-| Explicit feedback | User ratings, thumbs, corrections | Clear intent, direct measurement | Goodhart risk if over-weighted; low participation |
-| Behavioral / implicit | Reformulation (negative), follow-up depth (positive), adoption signals | Passive capture, hard to game | Noisy, delayed |
-| Veracity / objective | Fact corroboration over time, subsequent knowledge confirmation | Fully Goodhart-resistant, ground truth | Delayed, not always measurable |
-
-Domain trust policies govern signal weighting: legal domains weight veracity highest; hobby domains can rely more on explicit and behavioral signals.
-
-### Prediction-Error Engine
-
-Before each advisory response, Package 3 computes `predicted_quality_score` from fact metadata (confidence scores, corroboration levels, domain coverage, contradiction density, recency, adapter niche match). After the response, three measurement windows collect actual quality signals:
-
-- **Immediate** (0-5 min): Explicit rating, reformulation detection
-- **Short-term** (1-24 hr): Follow-up depth, fact corrections
-- **Delayed** (24-72 hr): Hindsight satisfaction probe (highest-value signal per research)
-
-The learning signal is:
-
-```
-delta = actual_quality_signal - predicted_quality_score
-```
-
-Delta propagates backward through the causal chain: adapter configuration fitness, fact reliability scores, source credibility scores, and knowledge gap detection.
-
-### Curiosity Service
-
-Self-directed knowledge acquisition. Maintains a domain question corpus, continuously self-queries DEKE, measures answerability, and generates harvest directives for Package 1.
-
-Gap taxonomy:
-
-| Gap Type | Harvest Directive |
-|----------|-------------------|
-| Depth gap | Find more primary sources on the same topic |
-| Breadth gap | Explore related topic areas |
-| Recency gap | Re-verify existing sources; find recent sources |
-| Contradiction gap | Find authoritative resolution; prioritize primary sources |
-| Blind spot | Broad exploration harvest |
-
-### Adapter Evolution via MAP-Elites
-
-Rather than a single adapter per domain, Package 3 maintains a MAP-Elites archive: a grid of adapter variants indexed by behavioral dimensions (query_type x stakes_level x knowledge_depth).
-
-Evolution mechanics:
-
-| Operation | Mechanism |
-|-----------|-----------|
-| Mutation | GEPA-derived reflective mutation: feed full interaction trajectory to LLM, diagnose failure, propose adapter revision. One Haiku call per mutation attempt. |
-| Competition | Variants run in shadow mode alongside incumbents. Promote if higher mean delta over N interactions. |
-| Pruning | Variants with persistent negative deltas deprecated after grace period. |
-| Preservation | One variant per niche always preserved as reference baseline. |
-
-The honesty constraint safety gate (Guardrail G1) asserts that a variant's confidence ratio has not degraded before promotion. A variant that increases confident-but-wrong responses is disqualified even if its overall quality score is higher.
-
-### GEPA Component Mapping to DEKE
-
-| GEPA Component | DEKE Equivalent |
-|----------------|-----------------|
-| System with prompts | Domain adapter: SystemPrompt(), WeightFacts(), FormatContext() |
-| Training dataset | AdvisoryInteractionEvent archive per niche |
-| Evaluation metric | Predicted vs. actual quality delta |
-| Feedback function | Three-signal framework |
-| Rollout | One advisory interaction cycle |
-| Pareto frontier | MAP-Elites archive grid |
-| Reflective mutation | LLM-generated adapter variant from failure diagnosis |
-
-### Package 3 Component Profile
-
-| Component | Role |
-|-----------|------|
-| PostgreSQL | Interaction logs, delta history, adapter archive, curiosity queue, quality scores |
-| Background .NET services | Curiosity loop, delta propagation, adapter fitness updates (all async) |
-| No LLM API calls | Package 3 observes and learns; it does not generate |
-| Lightweight ML (optional) | Prediction model can start as weighted average, upgrade to regression model |
-| No embedding computation | Operates on structured metadata, not vectors |
-| REST API | /api/feedback, /api/interactions, /api/health/domain |
+The Evolution Engine is a research direction exploring self-improving advisory quality through prediction-error learning and adapter evolution. It is not part of the current product scope. For the full research vision, see [science/evolution-vision.md](../science/evolution-vision.md).
 
 ---
 

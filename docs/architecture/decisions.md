@@ -48,6 +48,16 @@ Decisions captured during design sessions, recorded with date, decision, and rat
 | 2026-04 | Federation is read-only (no federated writes) | Facts are only created locally. This preserves provenance integrity and prevents distributed consistency problems. Query-time delegation is sufficient for Phase 1-3. |
 | 2026-04 | Bundle Phase 3 MCP tools with Phase 2 federated search | MCP tools are the primary consumer interface. Deploying federated search without updating MCP tools creates a capability gap. Bundling ensures consumers benefit immediately. |
 
+### 2026-04 Product Checkpoint
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-04 | Defer Package 3 (Evolution Engine) to research status | The Evolution Engine requires user volume that does not exist: three-signal framework needs interaction data, MAP-Elites needs statistical significance per niche, Curiosity Service solves a problem solvable by manual curation at current scale. Preserved as research vision in science/evolution-vision.md. |
+| 2026-04 | Simplify advisory pipeline from 13 stages to 7 | Niche classification, quality prediction, escalation check, and signal emission are premature without Package 3. A 7-stage pipeline (validate, retrieve, assemble, prompt, call, respond, log) delivers full advisory capability with less complexity. |
+| 2026-04 | Simplify trust framework to source credibility + fact confidence + temporal validity | The full provenance cathedral (5-level dedup, corroboration, contradiction detection, domain trust policies, trust state lifecycle) delivers 80% of value at 20% of complexity. Corroboration and contradiction detection move to planned enhancements. |
+| 2026-04 | Reframe knowledge compensation as hypothesis to validate, not architectural invariant | The principle is directionally sound (better context improves smaller model output) but unproven. Model costs are declining faster than knowledge bases grow. Requires empirical validation: does DEKE + Haiku outperform Haiku alone on a standard question set? |
+| 2026-04 | Move to two-package product model (Knowledge Base + Knowledge Leverage) | Focus on delivering value (grounded advisory responses) before learning from it (evolution). Package 3 becomes viable only after multiple domains, sufficient query volume, and a measurable quality problem that manual curation cannot solve. |
+
 ---
 
 ## Guardrails and Risk Analysis
