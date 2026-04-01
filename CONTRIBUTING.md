@@ -42,6 +42,52 @@ This file is loaded last and overrides all other configuration. You can also use
 export ConnectionStrings__Deke="Host=localhost;Database=mydb;Username=myuser;Password=mypass"
 ```
 
+### LLM Provider Secrets
+
+DEKE supports Gemini and OpenAI as interchangeable LLM backends. One is active at a time, selected via configuration. API keys are stored using .NET User Secrets (never in code or committed files).
+
+All three host projects share a single secret store, so you set secrets once:
+
+```bash
+# Set your API keys (one or both)
+dotnet user-secrets set "Llm:GeminiApiKey" "your-gemini-key" --project src/Deke.Api
+dotnet user-secrets set "Llm:OpenAiApiKey" "your-openai-key" --project src/Deke.Api
+
+# Choose the active provider
+dotnet user-secrets set "Llm:Provider" "Gemini" --project src/Deke.Api
+```
+
+To switch providers, just change the `Provider` value — both keys stay stored:
+
+```bash
+dotnet user-secrets set "Llm:Provider" "OpenAi" --project src/Deke.Api
+```
+
+To verify what's stored:
+
+```bash
+dotnet user-secrets list --project src/Deke.Api
+```
+
+You can optionally override the default models:
+
+```bash
+dotnet user-secrets set "Llm:GeminiModel" "gemini-2.0-flash" --project src/Deke.Api
+dotnet user-secrets set "Llm:OpenAiModel" "gpt-4o-mini" --project src/Deke.Api
+```
+
+**For Claude Code users**, you can also set keys via environment variables in `.claude/settings.local.json` (git-ignored):
+
+```json
+{
+  "env": {
+    "Llm__Provider": "Gemini",
+    "Llm__GeminiApiKey": "your-gemini-key",
+    "Llm__OpenAiApiKey": "your-openai-key"
+  }
+}
+```
+
 ### API Key (Optional)
 
 Write endpoints (POST, DELETE) require an API key via the `X-Api-Key` header. For local development, leave `ApiKey` empty in `appsettings.json` to disable auth. To test with auth enabled, add to your local override:
