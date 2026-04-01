@@ -94,7 +94,8 @@ Search my fishing knowledge base for "ice fishing techniques"
 
 ## Documentation
 
-- [SPECIFICATION.md](./SPECIFICATION.md) - Complete technical specification
+- [Product Overview](./docs/product/overview.md) - What DEKE is and why
+- [Technical Specification](./docs/architecture/specification.md) - How it is built
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute
 - [Documentation Index](./docs/INDEX.md) - Full documentation map and conventions
 

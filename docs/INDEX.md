@@ -7,62 +7,96 @@ This index provides a navigable overview of all DEKE project documentation.
 | Document | Type | Description |
 |----------|------|-------------|
 | [README.md](../README.md) | Living | Project overview, quick start guide, architecture summary |
-| [SPECIFICATION.md](../SPECIFICATION.md) | Living (versioned) | Complete technical specification with decision log |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | Living | Setup guide, coding conventions, documentation guide, tooling |
 | [CLAUDE.md](../CLAUDE.md) | Living | AI development instructions, project conventions, code style |
-| [CONTRIBUTING.md](../CONTRIBUTING.md) | Living | Setup guide, coding conventions, tooling recommendations |
 | [LICENSE](../LICENSE) | Static | MIT License |
 
-## docs/ Directory
+## Product — What the System Does
 
 | Document | Type | Description |
 |----------|------|-------------|
-| [INDEX.md](./INDEX.md) | Living | This file -- documentation index and map |
-| [federation-spec.md](./federation-spec.md) | Living | Federation protocol specification for multi-instance DEKE communication |
-| [retrieval-pipeline-spec.md](./retrieval-pipeline-spec.md) | Living | Retrieval pipeline improvements: chunking, hybrid search, re-ranking, query transformation, context assembly, evaluation, ingestion formats, semantic cache |
+| [overview.md](product/overview.md) | Living | Vision, problem statement, three-package architecture, design principles |
+| [knowledge-base.md](product/knowledge-base.md) | Living | Package 1: knowledge ingestion, search, quality, trust framework |
+| [knowledge-leverage.md](product/knowledge-leverage.md) | Living | Package 2: advisory pipeline, domain adapters, confidence expression |
+| [evolution-engine.md](product/evolution-engine.md) | Living | Package 3: prediction-error learning, curiosity, adapter evolution |
+| [glossary.md](product/glossary.md) | Living | Domain terms and definitions |
+
+## Architecture — How It Is Built
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [specification.md](architecture/specification.md) | Living | Tech stack, database schema, API contracts, code patterns |
+| [federation.md](architecture/federation.md) | Living | Federation protocol: discovery, delegation, provenance, loop prevention |
+| [retrieval-pipeline.md](architecture/retrieval-pipeline.md) | Living | Retrieval pipeline design: chunking, hybrid search, re-ranking, phases |
+| [decisions.md](architecture/decisions.md) | Living | Architecture decision records, guardrails, open design questions |
+
+## Science — Background Research
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [neuroevolution.md](science/neuroevolution.md) | Reference | Evolution strategies, NEAT, NAS, population-based training |
+| [reinforcement-learning.md](science/reinforcement-learning.md) | Reference | TD learning, Goodhart's Law, curiosity, quality-diversity algorithms |
+| [retrieval-theory.md](science/retrieval-theory.md) | Reference | Chunking, hybrid search, re-ranking, query transformation theory |
+| [papers.md](science/papers.md) | Reference | Curated bibliography organized by topic |
+
+## Planning
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [roadmap.md](roadmap.md) | Living | Phase summary across all packages |
 
 ## Documentation Map
 
 ```
 DEKE/
-├── README.md                       Project entry point, quick start
-├── SPECIFICATION.md                Technical specification (versioned, decision log)
-├── CLAUDE.md                       AI-assisted development instructions
+├── README.md                           Project entry point, quick start
+├── CONTRIBUTING.md                     Developer setup, documentation guide
+├── CLAUDE.md                           AI-assisted development instructions
+├── archive.zip                         Original documentation (docx files)
 └── docs/
-    ├── INDEX.md                    Documentation index (this file)
-    ├── federation-spec.md          Federation protocol specification
-    └── retrieval-pipeline-spec.md  Retrieval pipeline improvements
+    ├── INDEX.md                        This file
+    ├── roadmap.md                      Implementation phases and milestones
+    ├── product/                        "What" — system model and behavior
+    │   ├── overview.md                 Vision and three-package architecture
+    │   ├── knowledge-base.md           Package 1: knowledge integrity
+    │   ├── knowledge-leverage.md       Package 2: advisory responses
+    │   ├── evolution-engine.md         Package 3: self-improvement
+    │   └── glossary.md                 Domain terms
+    ├── architecture/                   "How" — design and implementation
+    │   ├── specification.md            Technical specification
+    │   ├── federation.md               Federation protocol
+    │   ├── retrieval-pipeline.md       Retrieval pipeline design
+    │   └── decisions.md                ADRs, guardrails, open questions
+    └── science/                        Background research
+        ├── neuroevolution.md           Evolution strategies and frameworks
+        ├── reinforcement-learning.md   TD learning, Goodhart's Law, curiosity
+        ├── retrieval-theory.md         Retrieval science and techniques
+        └── papers.md                   Paper bibliography
 ```
 
 ## Document Classifications
 
 ### Living Documents
 
-These documents are actively maintained and updated as the project evolves.
+Actively maintained as the project evolves.
 
-- `README.md` -- Updated when project capabilities, setup steps, or architecture change.
-- `SPECIFICATION.md` -- Updated when technical decisions are made or plans change. Contains a decision log tracking the reasoning behind changes.
-- `CLAUDE.md` -- Updated when development conventions, project structure, or tooling change.
-- `docs/INDEX.md` -- Updated whenever documentation is added, removed, or reorganized.
-- `docs/federation-spec.md` -- Updated as the federation protocol is designed and implemented.
-- `docs/retrieval-pipeline-spec.md` -- Updated as retrieval pipeline phases are designed and implemented.
+**Product**: Updated when system capabilities, package scope, or design principles change.
 
-## Cross-Reference Summary
+**Architecture**: Updated when technical decisions are made, implementations change, or new design questions arise. `decisions.md` carries the architecture decision log.
 
-| Source | Links To |
-|--------|----------|
-| `README.md` | `SPECIFICATION.md`, `CLAUDE.md` |
-| `CLAUDE.md` | `SPECIFICATION.md`, external dependency docs |
-| `SPECIFICATION.md` | External dependency docs |
-| `docs/INDEX.md` | All documentation files |
-| `docs/federation-spec.md` | `SPECIFICATION.md` (architecture context) |
-| `docs/retrieval-pipeline-spec.md` | `SPECIFICATION.md` (models, interfaces, repositories) |
+**Planning**: `roadmap.md` updated at each milestone.
+
+### Reference Documents
+
+The `science/` branch contains curated research that ages gracefully. Updated when new relevant research is reviewed, not on every code change.
 
 ## Conventions
 
-- **Root documents**: UPPERCASE filenames (e.g., `README.md`, `SPECIFICATION.md`)
-- **docs/ files**: lowercase-with-hyphens
+- **Root documents**: UPPERCASE filenames (e.g., `README.md`, `CONTRIBUTING.md`)
+- **docs/ files**: lowercase-with-hyphens (e.g., `retrieval-pipeline.md`)
 - **Tone**: Formal
 - **Headings**: Single H1 per file
-- **Code**: Inline backticks for short codes and commands, fenced code blocks with language tags otherwise
-- **Links**: Relative Markdown links
+- **Code**: Inline backticks for short codes, fenced blocks with language tags
+- **Links**: Relative Markdown links between documents
 - **External references**: Link to official documentation rather than restating content
+- **Content routing**: product/ = what (no code), architecture/ = how (tech details), science/ = general research (no DEKE specifics)

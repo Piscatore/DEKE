@@ -61,6 +61,22 @@ Write endpoints (POST, DELETE) require an API key via the `X-Api-Key` header. Fo
 - 4-space indentation (see `.editorconfig`)
 - New endpoints require auth by default (fallback policy). Add `.AllowAnonymous()` for read endpoints or `.RequireAuthorization()` for write endpoints explicitly.
 
+## Documentation Guide
+
+Documentation is organized into three branches under `docs/`. See [docs/INDEX.md](docs/INDEX.md) for the full map.
+
+| Branch | Purpose | Content rule |
+|--------|---------|-------------|
+| `product/` | What the system does | No code, no library names, no SQL — conceptual only |
+| `architecture/` | How it is built | Tech stack, schemas, API contracts, code patterns |
+| `science/` | Background research | General theory — no DEKE-specific implementation details |
+
+**File naming**: root = UPPERCASE (`README.md`), docs/ = lowercase-with-hyphens (`retrieval-pipeline.md`). Single H1 per file. Formal tone.
+
+**Adding documentation**: Check `docs/INDEX.md` first. If a document for your topic exists, update it. If not, create a new file following naming conventions and add it to the index. Architecture decisions go in `docs/architecture/decisions.md`.
+
+**Governance**: Documentation maintenance is managed by the doc-maintainer plugin. See the Documentation Governance section in [CLAUDE.md](CLAUDE.md) for details.
+
 ## PR Process
 
 1. Fork the repo and create a feature branch from `main`
