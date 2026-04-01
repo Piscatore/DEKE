@@ -20,6 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
 
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
+builder.Services.AddDekeLlm(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
 
 // Authentication
