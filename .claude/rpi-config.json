@@ -1,0 +1,122 @@
+{
+  "project": {
+    "name": "DEKE",
+    "description": "Domain Expert Knowledge Engine — self-improving, domain-specific knowledge base with semantic search",
+    "buildCommand": "dotnet build",
+    "testCommand": "dotnet test",
+    "branchPrefix": "",
+    "workingDirs": {
+      "briefs": "thoughts/shared/work",
+      "research": "thoughts/shared/research",
+      "plans": "thoughts/shared/plans",
+      "sessions": "thoughts/shared/sessions"
+    }
+  },
+
+  "architecture": {
+    "layers": [
+      {
+        "name": "Core",
+        "path": "src/Deke.Core",
+        "description": "Domain models (Models/) and interfaces (Interfaces/). Zero dependencies.",
+        "dependsOn": []
+      },
+      {
+        "name": "Database Schema",
+        "path": "init.sql",
+        "description": "PostgreSQL schema with pgvector. Managed via init.sql, not migrations.",
+        "dependsOn": []
+      },
+      {
+        "name": "Infrastructure",
+        "path": "src/Deke.Infrastructure",
+        "description": "Repositories (Dapper), embeddings (ONNX), harvesters, type handlers, DI registration.",
+        "dependsOn": ["Core"]
+      },
+      {
+        "name": "Api",
+        "path": "src/Deke.Api",
+        "description": "ASP.NET Core Minimal API endpoints.",
+        "dependsOn": ["Core", "Infrastructure"]
+      },
+      {
+        "name": "Mcp",
+        "path": "src/Deke.Mcp",
+        "description": "MCP Server for Claude/LLM integration.",
+        "dependsOn": ["Core", "Infrastructure"]
+      },
+      {
+        "name": "Worker",
+        "path": "src/Deke.Worker",
+        "description": "Background services (source monitoring, learning, pattern discovery).",
+        "dependsOn": ["Core", "Infrastructure"]
+      },
+      {
+        "name": "Tests",
+        "path": "tests/Deke.Tests",
+        "description": "xUnit unit and integration tests.",
+        "dependsOn": ["Core", "Infrastructure"]
+      }
+    ],
+    "dependencyFlow": "Core → Infrastructure → Api/Mcp/Worker",
+    "codePatterns": [
+      "Domain models: classes with required properties, Guid Id = Guid.NewGuid(), DateTimeOffset timestamps",
+      "DTOs: records with required init properties",
+      "Repository interfaces: Task<T?> for lookups, Task<List<T>> for collections, CancellationToken ct = default",
+      "Repository implementations: inject DbConnectionFactory, await using var conn, Dapper queries with triple-quoted strings",
+      "Vector search: Pgvector.Dapper, new Vector(embedding), cosine distance <=> operator",
+      "Embeddings: OnnxEmbeddingService.GenerateEmbedding() returns float[384], L2-normalize before storage",
+      "API endpoints: static class, MapGroup('/api/xxx').WithTags(), private static handlers, AllowAnonymous/RequireAuthorization",
+      "MCP tools: [McpServerToolType] class, [McpServerTool] method, [Description] on class and params, .WithTools<T>()",
+      "Workers: BackgroundService, ExecuteAsync with while loop, IServiceProvider.CreateScope(), Task.Delay interval",
+      "DI: ServiceCollectionExtensions with AddDekeXxx() extension methods, Singleton for config/factories, Scoped for repos",
+      "JSONB columns: register JsonbTypeHandler<T> in DapperConfig.Initialize()",
+      "Configuration: IOptions<T> for new config, manual binding for existing EmbeddingsConfig pattern"
+    ],
+    "styleRules": [
+      "File-scoped namespaces",
+      "Private fields prefixed with _",
+      "CancellationToken on all async methods",
+      "No EF Core — Dapper only",
+      "No async void — always async Task",
+      "records for DTOs, classes for mutable entities"
+    ]
+  },
+
+  "validation": {
+    "structuralChecks": [
+      "Core changes before Infrastructure before Hosts",
+      "Core never references Infrastructure or Host projects",
+      "New Core interfaces defined before repository implementations",
+      "Every new service has a DI registration step in ServiceCollectionExtensions or host Program.cs",
+      "Database changes in init.sql match model properties (column names map via MatchNamesWithUnderscores)"
+    ],
+    "patternChecks": [
+      "Repositories use DbConnectionFactory, not direct NpgsqlConnection",
+      "Vector operations use Pgvector.Dapper with ::vector cast in SQL",
+      "API endpoints use static class with MapGroup pattern",
+      "MCP tools have [McpServerToolType] and [Description] attributes",
+      "Workers inherit BackgroundService with IServiceProvider.CreateScope() for scoped deps",
+      "New JSONB column types have JsonbTypeHandler<T> registered in DapperConfig.Initialize()",
+      "Type handlers registered before any repository uses them"
+    ]
+  },
+
+  "research": {
+    "agents": [
+      ".claude/agents/codebase-locator.md",
+      ".claude/agents/codebase-analyzer.md",
+      ".claude/agents/codebase-pattern-finder.md"
+    ],
+    "subsystems": [
+      { "name": "Core models/interfaces", "description": "New domain types or interface changes", "path": "src/Deke.Core" },
+      { "name": "Repositories", "description": "New data access or query changes", "path": "src/Deke.Infrastructure/Repositories" },
+      { "name": "Embeddings", "description": "Embedding pipeline changes", "path": "src/Deke.Infrastructure/Embeddings" },
+      { "name": "Harvesters", "description": "New or modified content harvesters", "path": "src/Deke.Infrastructure/Harvesters" },
+      { "name": "API Endpoints", "description": "New or modified REST endpoints", "path": "src/Deke.Api/Endpoints" },
+      { "name": "MCP Tools", "description": "New or modified MCP tools for Claude integration", "path": "src/Deke.Mcp/Tools" },
+      { "name": "Worker Services", "description": "New or modified background services", "path": "src/Deke.Worker/Services" },
+      { "name": "Database schema", "description": "Table/column/index changes", "path": "init.sql" }
+    ]
+  }
+}
