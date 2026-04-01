@@ -10,7 +10,7 @@ public interface IFactRepository
 
     Task<List<FactSearchResult>> SearchAsync(
         float[] embedding,
-        string domain,
+        string? domain,
         int limit = 10,
         float minSimilarity = 0.5f,
         CancellationToken ct = default);

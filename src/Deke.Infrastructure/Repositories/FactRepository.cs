@@ -48,22 +48,25 @@ public class FactRepository : IFactRepository
 
     public async Task<List<FactSearchResult>> SearchAsync(
         float[] embedding,
-        string domain,
+        string? domain,
         int limit = 10,
         float minSimilarity = 0.5f,
         CancellationToken ct = default)
     {
         await using var conn = await _db.CreateConnectionAsync(ct);
         var vector = new Vector(embedding);
+
+        var domainClause = domain is not null ? "AND f.domain = @domain" : "";
+
         var results = await conn.QueryAsync<FactSearchResult>(
-            """
+            $"""
             SELECT f.id, f.content, f.domain, f.confidence, f.source_id, f.created_at,
                    1 - (f.embedding <=> @vector::vector) AS similarity,
                    s.url AS source_url
             FROM facts f
             LEFT JOIN sources s ON s.id = f.source_id
-            WHERE f.domain = @domain
-              AND f.embedding IS NOT NULL
+            WHERE f.embedding IS NOT NULL
+              {domainClause}
               AND 1 - (f.embedding <=> @vector::vector) > @minSimilarity
             ORDER BY f.embedding <=> @vector::vector
             LIMIT @limit
