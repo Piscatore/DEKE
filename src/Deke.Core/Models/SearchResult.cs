@@ -10,22 +10,25 @@ public record FactSearchResult
     public Guid? SourceId { get; init; }
     public string? SourceUrl { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
+    public ResultProvenance? Provenance { get; init; }
 }
 
 public record SearchResponse
 {
     public required string Query { get; init; }
-    public required string Domain { get; init; }
+    public string? Domain { get; init; }
     public List<FactSearchResult> Results { get; init; } = [];
     public int TotalCount { get; init; }
     public TimeSpan SearchDuration { get; init; }
+    public FederationMetadata? Federation { get; init; }
 }
 
 public record ContextResponse
 {
     public required string Topic { get; init; }
-    public required string Domain { get; init; }
+    public string? Domain { get; init; }
     public required string Context { get; init; }
     public int FactCount { get; init; }
     public int ApproximateTokens { get; init; }
+    public FederationMetadata? Federation { get; init; }
 }

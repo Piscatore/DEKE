@@ -3,6 +3,7 @@ using Deke.Core.Models;
 using Deke.Infrastructure.Data;
 using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;
+using Deke.Infrastructure.Federation;
 using Deke.Infrastructure.Harvesters;
 using Deke.Infrastructure.Llm;
 using Deke.Infrastructure.Repositories;
@@ -64,6 +65,8 @@ public static class ServiceCollectionExtensions
         services.Configure<FederationConfig>(configuration.GetSection("Federation"));
 
         services.AddScoped<IFederationPeerRepository, FederationPeerRepository>();
+        services.AddSingleton<FederationClient>();
+        services.AddScoped<IFederatedSearchService, FederatedSearchService>();
 
         services.AddHttpClient("federation", client =>
         {

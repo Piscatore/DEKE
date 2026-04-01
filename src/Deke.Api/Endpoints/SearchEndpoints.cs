@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 
 namespace Deke.Api.Endpoints;
@@ -11,90 +9,72 @@ public static class SearchEndpoints
     {
         var group = app.MapGroup("/api/search").WithTags("Search").AllowAnonymous();
 
-        group.MapGet("/", SearchFacts)
+        group.MapPost("/", SearchFacts)
             .WithName("SearchFacts")
-            .WithDescription("Search for facts using semantic similarity");
+            .WithDescription("Search for facts using semantic similarity, with optional federation");
 
-        group.MapGet("/context", GetContext)
+        group.MapPost("/context", GetContext)
             .WithName("GetContext")
             .WithDescription("Get relevant context for a topic, formatted for LLM consumption");
     }
 
     private static async Task<IResult> SearchFacts(
-        string query,
-        string domain,
-        int limit = 10,
-        float minSimilarity = 0.5f,
-        IFactRepository factRepo = null!,
-        IEmbeddingService embeddings = null!,
-        CancellationToken ct = default)
+        FederatedSearchRequest request,
+        HttpContext httpContext,
+        IFederatedSearchService searchService,
+        CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        if (string.IsNullOrWhiteSpace(request.Query))
             return Results.BadRequest(new { error = "Query is required." });
-        if (string.IsNullOrWhiteSpace(domain))
-            return Results.BadRequest(new { error = "Domain is required." });
 
-        limit = Math.Clamp(limit, 1, 500);
-        minSimilarity = Math.Clamp(minSimilarity, 0f, 1f);
-
-        var sw = Stopwatch.StartNew();
-        var embedding = embeddings.GenerateEmbedding(query);
-        var results = await factRepo.SearchAsync(embedding, domain, limit, minSimilarity, ct);
-        sw.Stop();
-
-        return Results.Ok(new SearchResponse
-        {
-            Query = query,
-            Domain = domain,
-            Results = results,
-            TotalCount = results.Count,
-            SearchDuration = sw.Elapsed
-        });
+        var federation = ParseFederationContext(httpContext);
+        var response = await searchService.SearchAsync(request, federation, ct);
+        return Results.Ok(response);
     }
 
     private static async Task<IResult> GetContext(
-        string topic,
-        string domain,
-        int maxTokens = 2000,
-        IFactRepository factRepo = null!,
-        IEmbeddingService embeddings = null!,
-        CancellationToken ct = default)
+        FederatedContextRequest request,
+        HttpContext httpContext,
+        IFederatedSearchService searchService,
+        CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(topic))
+        if (string.IsNullOrWhiteSpace(request.Topic))
             return Results.BadRequest(new { error = "Topic is required." });
-        if (string.IsNullOrWhiteSpace(domain))
-            return Results.BadRequest(new { error = "Domain is required." });
 
-        maxTokens = Math.Clamp(maxTokens, 100, 10000);
+        var federation = ParseFederationContext(httpContext);
+        var response = await searchService.GetContextAsync(request, federation, ct);
+        return Results.Ok(response);
+    }
 
-        var embedding = embeddings.GenerateEmbedding(topic);
-        var facts = await factRepo.SearchAsync(embedding, domain, limit: 30, minSimilarity: 0.4f, ct);
+    private static FederationContext? ParseFederationContext(HttpContext httpContext)
+    {
+        var headers = httpContext.Request.Headers;
 
-        var sb = new StringBuilder();
-        sb.AppendLine($"## Domain Knowledge: {domain}");
-        sb.AppendLine($"### Topic: {topic}");
-        sb.AppendLine();
+        if (!headers.TryGetValue("X-Federation-Hop-Count", out var hopCountHeader))
+            return null;
 
-        var tokenEstimate = 0;
-        var factCount = 0;
+        if (!int.TryParse(hopCountHeader.ToString(), out var hopCount))
+            return null;
 
-        foreach (var fact in facts.OrderByDescending(f => f.Similarity))
+        var queryOrigin = headers.TryGetValue("X-Federation-Query-Origin", out var origin)
+            ? origin.ToString()
+            : "unknown";
+
+        var visited = headers.TryGetValue("X-Federation-Visited", out var visitedHeader)
+            ? visitedHeader.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+            : [];
+
+        var requestId = headers.TryGetValue("X-Federation-Request-Id", out var requestIdHeader)
+            && Guid.TryParse(requestIdHeader.ToString(), out var parsedId)
+            ? parsedId
+            : Guid.NewGuid();
+
+        return new FederationContext
         {
-            var line = $"- {fact.Content}";
-            var lineTokens = line.Length / 4;
-            if (tokenEstimate + lineTokens > maxTokens) break;
-            sb.AppendLine(line);
-            tokenEstimate += lineTokens;
-            factCount++;
-        }
-
-        return Results.Ok(new ContextResponse
-        {
-            Topic = topic,
-            Domain = domain,
-            Context = sb.ToString(),
-            FactCount = factCount,
-            ApproximateTokens = tokenEstimate
-        });
+            HopCount = hopCount,
+            QueryOrigin = queryOrigin,
+            Visited = visited,
+            RequestId = requestId
+        };
     }
 }
