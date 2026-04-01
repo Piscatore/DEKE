@@ -20,6 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
 
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
+builder.Services.AddDekeFederation(builder.Configuration);
 
 // Authentication
 builder.Services.AddAuthentication("ApiKey")
@@ -46,5 +47,6 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
 app.MapSearchEndpoints();
 app.MapFactEndpoints();
 app.MapSourceEndpoints();
+app.MapFederationEndpoints();
 
 app.Run();

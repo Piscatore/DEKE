@@ -121,3 +121,18 @@ CREATE TABLE learning_logs (
 );
 
 CREATE INDEX idx_learning_logs_domain ON learning_logs(domain, started_at DESC);
+
+-- Federation peers: Known DEKE instances for cross-domain queries
+CREATE TABLE federation_peers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    instance_id VARCHAR(100) NOT NULL UNIQUE,
+    base_url TEXT NOT NULL,
+    domains JSONB NOT NULL DEFAULT '[]',
+    capabilities JSONB NOT NULL DEFAULT '[]',
+    protocol_version VARCHAR(10) NOT NULL DEFAULT '1',
+    last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_healthy BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_federation_peers_healthy ON federation_peers(is_healthy) WHERE is_healthy = TRUE;

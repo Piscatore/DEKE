@@ -22,4 +22,6 @@ public interface IFactRepository
     Task<int> GetCountAsync(string domain, CancellationToken ct = default);
     Task<List<Fact>> GetRecentAsync(string domain, int days, int limit = 100, CancellationToken ct = default);
     Task<List<Fact>> GetWithoutRelationsAsync(string domain, int limit = 50, CancellationToken ct = default);
+
+    Task<List<DomainStats>> GetDomainStatsAsync(CancellationToken ct = default);
 }
