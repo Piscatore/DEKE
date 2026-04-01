@@ -1,0 +1,54 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Deke.Api",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Deke.Api/bin/Debug/net9.0/Deke.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Deke.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      }
+    },
+    {
+      "name": "Deke.Worker",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Deke.Worker/bin/Debug/net9.0/Deke.Worker.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Deke.Worker",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Deke.Mcp",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Deke.Mcp/bin/Debug/net9.0/Deke.Mcp.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Deke.Mcp",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Api + Worker",
+      "configurations": ["Deke.Api", "Deke.Worker"]
+    }
+  ]
+}

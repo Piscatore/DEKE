@@ -1,0 +1,61 @@
+{
+  // Editor
+  "editor.formatOnSave": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+
+  // Files
+  "files.encoding": "utf8bom",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/models": true
+  },
+
+  // Search exclusions
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/models": true,
+    "**/node_modules": true
+  },
+
+  // C# / .NET
+  "dotnet.defaultSolution": "DEKE.sln",
+  "omnisharp.enableEditorConfigSupport": true,
+  "csharp.format.enable": true,
+
+  // Testing
+  "dotnet.unitTests.runSettingsPath": "",
+
+  // Terminal
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+
+  // YAML
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  },
+
+  // SQL
+  "[sql]": {
+    "editor.defaultFormatter": "ms-ossdata.vscode-postgresql"
+  },
+
+  // Markdown
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": false,
+      "comments": false,
+      "strings": false
+    }
+  },
+
+  // Docker/Podman
+  "docker.dockerComposeBuild": false,
+  "docker.composeCommand": "podman-compose"
+}

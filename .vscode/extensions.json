@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    // C# / .NET
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+
+    // Database
+    "ms-ossdata.vscode-postgresql",
+
+    // Containers
+    "ms-azuretools.vscode-docker",
+
+    // Testing
+    "ms-dotnettools.vstest",
+
+    // Editor support
+    "editorconfig.editorconfig",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+
+    // Git
+    "eamodio.gitlens",
+    "github.vscode-github-actions",
+
+    // REST API testing
+    "humao.rest-client",
+
+    // Claude Code
+    "anthropics.claude-code"
+  ],
+  "unwantedRecommendations": []
+}

@@ -1,0 +1,60 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/DEKE.sln"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "${workspaceFolder}/DEKE.sln", "--no-build"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "dependsOn": "build"
+    },
+    {
+      "label": "format-check",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["format", "--verify-no-changes", "--verbosity", "diagnostic"],
+      "problemMatcher": []
+    },
+    {
+      "label": "format-fix",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["format"],
+      "problemMatcher": []
+    },
+    {
+      "label": "db-up",
+      "type": "shell",
+      "command": "podman-compose up -d",
+      "problemMatcher": []
+    },
+    {
+      "label": "db-down",
+      "type": "shell",
+      "command": "podman-compose down",
+      "problemMatcher": []
+    },
+    {
+      "label": "db-reset",
+      "type": "shell",
+      "command": "podman-compose down -v && podman-compose up -d",
+      "problemMatcher": []
+    }
+  ]
+}
