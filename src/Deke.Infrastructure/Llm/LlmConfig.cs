@@ -1,4 +1,4 @@
-namespace Deke.Infrastructure.Llm;
+﻿namespace Deke.Infrastructure.Llm;
 
 public class LlmConfig
 {
