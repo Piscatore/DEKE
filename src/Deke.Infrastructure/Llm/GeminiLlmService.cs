@@ -18,15 +18,15 @@ public class GeminiLlmService : ILlmService
         _logger = logger;
     }
 
-    public bool IsAvailable => !string.IsNullOrWhiteSpace(_config.ApiKey);
+    public bool IsAvailable => !string.IsNullOrWhiteSpace(_config.ActiveApiKey);
 
     public async Task<string> GenerateAsync(string prompt, CancellationToken ct = default)
     {
         if (!IsAvailable)
             throw new InvalidOperationException("Gemini API key is not configured.");
 
-        var model = string.IsNullOrWhiteSpace(_config.Model) ? "gemini-2.0-flash" : _config.Model;
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_config.ApiKey}";
+        var model = _config.ActiveModel;
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_config.ActiveApiKey}";
 
         var request = new
         {

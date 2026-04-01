@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "$input | ConvertFrom-Json | ForEach-Object { $f = $_.tool_input.file_path; if ($f -like '*.cs') { dotnet format --include $f 2>&1 | Out-Null } }",
+            "timeout": 30,
+            "statusMessage": "Formatting .cs file..."
+          }
+        ]
+      }
+    ]
+  }
+}

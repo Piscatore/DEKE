@@ -19,17 +19,17 @@ public class OpenAiLlmService : ILlmService
         _logger = logger;
     }
 
-    public bool IsAvailable => !string.IsNullOrWhiteSpace(_config.ApiKey);
+    public bool IsAvailable => !string.IsNullOrWhiteSpace(_config.ActiveApiKey);
 
     public async Task<string> GenerateAsync(string prompt, CancellationToken ct = default)
     {
         if (!IsAvailable)
             throw new InvalidOperationException("OpenAI API key is not configured.");
 
-        var model = string.IsNullOrWhiteSpace(_config.Model) ? "gpt-4o-mini" : _config.Model;
+        var model = _config.ActiveModel;
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config.ApiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config.ActiveApiKey);
         request.Content = JsonContent.Create(new
         {
             model,
