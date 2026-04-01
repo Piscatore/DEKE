@@ -1,4 +1,4 @@
-namespace Deke.Core.Models;
+﻿namespace Deke.Core.Models;
 
 public class FederationPeer
 {
