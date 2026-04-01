@@ -166,10 +166,13 @@ claude mcp add deke -- dotnet run --project "C:/src/Life Projects/DEKE/src/Deke.
 - Use `CancellationToken` for all async methods
 - Prefix private fields with `_`
 - Use file-scoped namespaces
+- **All `.cs` files must be UTF-8 with BOM** (editorconfig: `charset = utf-8-bom`). When creating new files or fully rewriting existing files, ensure the file starts with a UTF-8 BOM (`EF BB BF`). The CI format check will reject files missing the BOM.
+- **Keep `using` directives sorted alphabetically** (editorconfig: `dotnet_sort_system_directives_first = true`). When adding a new `using`, insert it in alphabetical order.
 
 ## References
 
-- [SPECIFICATION.md](./SPECIFICATION.md) - Complete technical specification
+- [Technical Specification](./docs/architecture/specification.md) - How it is built
+- [Product Overview](./docs/product/overview.md) - What DEKE is and why
 - [Documentation Index](./docs/INDEX.md) - Full documentation map and conventions
 - [pgvector docs](https://github.com/pgvector/pgvector)
 - [pgvector-dotnet](https://github.com/pgvector/pgvector-dotnet) - Dapper + pgvector
@@ -192,7 +195,7 @@ Content Type:         Standard documentation
 Operation:            Active maintenance
 Scope:                Entire repo (root + docs/)
 Project Type:         Multi-service backend (API + MCP + Worker + Core)
-Versioning:           SPECIFICATION.md only (decision log)
+Versioning:           docs/architecture/decisions.md (decision log)
 Style:                Formal tone, single H1, UPPERCASE root / lowercase-hyphen docs/
 Authoritative Sources: Reference only (link to external docs)
 Update Triggers:      Public API changes, configuration changes, dependency changes,
@@ -204,7 +207,7 @@ Cross-References:     Relative Markdown links, one-directional, documentation in
 
 ### Versioned Documents
 
-Only `SPECIFICATION.md` carries a version/decision log. The log records what changed and the reasoning behind it, especially when LLM-assisted development decisions diverge from earlier plans. Git handles version control; the in-document log serves as a decision journal.
+Only `docs/architecture/decisions.md` carries a version/decision log. The log records what changed and the reasoning behind it, especially when LLM-assisted development decisions diverge from earlier plans. Git handles version control; the in-document log serves as a decision journal.
 
 To run a documentation audit: "Run doc-maintainer in audit mode"
 To update docs: "Use doc-maintainer to update [description]"

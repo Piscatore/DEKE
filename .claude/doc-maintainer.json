@@ -1,0 +1,67 @@
+{
+  "agentVersion": "1.12.0",
+  "createdAt": "2026-03-11",
+  "updatedAt": "2026-03-11",
+  "contentType": "standard",
+  "operation": "active",
+  "scope": {
+    "description": "Entire repo (root + docs/)",
+    "paths": [
+      "README.md",
+      "CONTRIBUTING.md",
+      "CLAUDE.md",
+      "docs/INDEX.md",
+      "docs/roadmap.md",
+      "docs/product/",
+      "docs/architecture/",
+      "docs/science/"
+    ]
+  },
+  "projectType": {
+    "category": "multi-service-backend",
+    "components": ["API", "MCP", "Worker", "Core library"],
+    "description": "DEKE - Domain Expert Knowledge Engine — A self-improving, domain-specific knowledge base that serves as a semantic search backend for LLM services."
+  },
+  "style": {
+    "tone": "formal",
+    "headingHierarchy": "single-h1-per-file",
+    "fileNaming": {
+      "root": "UPPERCASE",
+      "docs": "lowercase-with-hyphens"
+    },
+    "templates": "search-for-best-practice-or-create-new",
+    "codeFormatting": {
+      "inline": "single backtick for short codes and commands",
+      "block": "fenced code blocks with language tags"
+    }
+  },
+  "versioning": {
+    "enabled": true,
+    "versionedDocuments": ["docs/architecture/decisions.md"],
+    "strategy": "decision-log",
+    "notes": "Only docs/architecture/decisions.md carries a version/decision log. The log records what changed and the reasoning behind it. Git handles version control; the in-document log serves as a decision journal."
+  },
+  "authoritativeSources": {
+    "policy": "reference-only",
+    "notes": "Link to official external docs rather than restating. Keep DEKE-specific usage patterns in own docs."
+  },
+  "updateTriggers": [
+    "public-api-changes",
+    "configuration-changes",
+    "dependency-changes",
+    "new-project-or-component",
+    "interface-changes-deke-core",
+    "infrastructure-changes",
+    "decision-changes"
+  ],
+  "updateTriggerExclusions": [
+    "database-schema-changes"
+  ],
+  "forbiddenActions": [],
+  "crossReferences": {
+    "linkFormat": "relative-markdown-links",
+    "directionality": "one-directional",
+    "indexMaintained": true,
+    "indexPath": "docs/INDEX.md"
+  }
+}
