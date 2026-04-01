@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;

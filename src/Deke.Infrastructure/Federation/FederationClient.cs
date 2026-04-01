@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Deke.Core.Models;
 using Microsoft.Extensions.Logging;
 
