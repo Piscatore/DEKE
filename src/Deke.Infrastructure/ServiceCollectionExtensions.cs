@@ -7,6 +7,8 @@ using Deke.Infrastructure.Federation;
 using Deke.Infrastructure.Harvesters;
 using Deke.Infrastructure.Llm;
 using Deke.Infrastructure.Repositories;
+using Deke.Infrastructure.Trust;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -31,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPatternRepository, PatternRepository>();
         services.AddScoped<IFactRelationRepository, FactRelationRepository>();
         services.AddScoped<ILearningLogRepository, LearningLogRepository>();
+        services.AddScoped<IInteractionLogRepository, InteractionLogRepository>();
 
         return services;
     }
@@ -46,6 +49,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(config);
         services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>, OnnxEmbeddingGenerator>();
 
         return services;
     }
@@ -55,7 +59,9 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient();
         services.AddScoped<IHarvester, RssHarvester>();
         services.AddScoped<IHarvester, WebPageHarvester>();
+        services.AddScoped<IHarvester, FileSystemHarvester>();
         services.AddScoped<IExtractionService, SimpleExtractionService>();
+        services.AddScoped<IChunker, SemanticChunkerAdapter>();
         return services;
     }
 
@@ -66,6 +72,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IFederationPeerRepository, FederationPeerRepository>();
         services.AddSingleton<FederationClient>();
+        services.AddSingleton<ITrustScoringService, TrustScoringService>();
         services.AddScoped<IFederatedSearchService, FederatedSearchService>();
 
         services.AddHttpClient("federation", client =>

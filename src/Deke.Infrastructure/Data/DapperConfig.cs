@@ -33,8 +33,9 @@ public static class DapperConfig
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<PeerDomainInfo>>());
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<string>>());
 
-        // Register UUID[] type handler
+        // Register UUID[] and REAL[] type handlers
         SqlMapper.AddTypeHandler(new GuidArrayTypeHandler());
+        SqlMapper.AddTypeHandler(new FloatArrayTypeHandler());
 
         // Register enum type handlers
         SqlMapper.AddTypeHandler(new EnumTypeHandler<SourceType>());
