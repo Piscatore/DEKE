@@ -5,25 +5,20 @@ namespace Deke.Infrastructure.Extraction;
 
 public class SimpleExtractionService : IExtractionService
 {
-    private static readonly string[] SentenceSeparators = [". ", "! ", "? ", "\n"];
-
     public Task<List<ExtractedFact>> ExtractFactsAsync(
         string content,
         string domain,
         string? sourceContext = null,
         CancellationToken ct = default)
     {
-        var sentences = content.Split(SentenceSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var trimmed = content.Trim();
 
-        var facts = sentences
-            .Where(s => s.Length >= 20 && s.Length <= 500)
-            .Select(s => new ExtractedFact
-            {
-                Content = s,
-                Confidence = 0.7f
-            })
-            .ToList();
+        if (trimmed.Length == 0)
+            return Task.FromResult(new List<ExtractedFact>());
 
-        return Task.FromResult(facts);
+        return Task.FromResult(new List<ExtractedFact>
+        {
+            new() { Content = trimmed, Confidence = 0.8f }
+        });
     }
 }

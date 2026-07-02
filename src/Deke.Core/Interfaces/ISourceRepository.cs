@@ -5,6 +5,7 @@ namespace Deke.Core.Interfaces;
 public interface ISourceRepository
 {
     Task<Source?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<Source?> GetByUrlAsync(string url, CancellationToken ct = default);
     Task<List<Source>> GetByDomainAsync(string domain, CancellationToken ct = default);
     Task<List<Source>> GetActiveAsync(CancellationToken ct = default);
     Task<List<Source>> GetDueForCheckAsync(CancellationToken ct = default);

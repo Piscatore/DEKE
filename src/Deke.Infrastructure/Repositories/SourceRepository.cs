@@ -19,6 +19,14 @@ public class SourceRepository : ISourceRepository
             new { id });
     }
 
+    public async Task<Source?> GetByUrlAsync(string url, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        return await conn.QueryFirstOrDefaultAsync<Source>(
+            "SELECT * FROM sources WHERE url = @url",
+            new { url });
+    }
+
     public async Task<List<Source>> GetByDomainAsync(string domain, CancellationToken ct = default)
     {
         await using var conn = await _db.CreateConnectionAsync(ct);

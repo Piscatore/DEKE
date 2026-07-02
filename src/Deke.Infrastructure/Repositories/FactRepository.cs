@@ -15,7 +15,8 @@ public class FactRepository : IFactRepository
     private const string SelectColumnsNoEmbedding =
         """
         id, content, domain, confidence, source_id, related_fact_ids,
-        entities, metadata, created_at, updated_at, is_outdated, outdated_reason
+        entities, metadata, created_at, updated_at, is_outdated, outdated_reason,
+        valid_from, valid_until
         """;
 
     private const string SelectAllColumns = SelectColumnsNoEmbedding + ", embedding";
@@ -61,8 +62,10 @@ public class FactRepository : IFactRepository
         var results = await conn.QueryAsync<FactSearchResult>(
             $"""
             SELECT f.id, f.content, f.domain, f.confidence, f.source_id, f.created_at,
+                   f.valid_from, f.valid_until,
                    1 - (f.embedding <=> @vector::vector) AS similarity,
-                   s.url AS source_url
+                   s.url AS source_url,
+                   COALESCE(s.credibility, 0) AS source_credibility
             FROM facts f
             LEFT JOIN sources s ON s.id = f.source_id
             WHERE f.embedding IS NOT NULL
@@ -83,10 +86,10 @@ public class FactRepository : IFactRepository
             """
             INSERT INTO facts (id, content, domain, embedding, confidence, source_id,
                 related_fact_ids, entities, metadata, created_at, updated_at,
-                is_outdated, outdated_reason)
+                is_outdated, outdated_reason, valid_from, valid_until)
             VALUES (@Id, @Content, @Domain, @Embedding::vector, @Confidence, @SourceId,
                 @RelatedFactIds, @Entities, @Metadata, @CreatedAt, @UpdatedAt,
-                @IsOutdated, @OutdatedReason)
+                @IsOutdated, @OutdatedReason, @ValidFrom, @ValidUntil)
             """,
             new
             {
@@ -102,7 +105,9 @@ public class FactRepository : IFactRepository
                 fact.CreatedAt,
                 fact.UpdatedAt,
                 fact.IsOutdated,
-                fact.OutdatedReason
+                fact.OutdatedReason,
+                fact.ValidFrom,
+                fact.ValidUntil
             });
         return fact.Id;
     }
@@ -125,7 +130,9 @@ public class FactRepository : IFactRepository
                 metadata = @Metadata,
                 updated_at = @UpdatedAt,
                 is_outdated = @IsOutdated,
-                outdated_reason = @OutdatedReason
+                outdated_reason = @OutdatedReason,
+                valid_from = @ValidFrom,
+                valid_until = @ValidUntil
             WHERE id = @Id
             """,
             new
@@ -141,7 +148,9 @@ public class FactRepository : IFactRepository
                 fact.Metadata,
                 fact.UpdatedAt,
                 fact.IsOutdated,
-                fact.OutdatedReason
+                fact.OutdatedReason,
+                fact.ValidFrom,
+                fact.ValidUntil
             });
     }
 

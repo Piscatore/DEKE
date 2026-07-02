@@ -17,6 +17,19 @@ builder.Services.AddDekeEmbeddings(builder.Configuration);
 builder.Services.AddDekeHarvesters();
 builder.Services.AddDekeLlm(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
+builder.Services.AddScoped<BootstrapIngestionService>();
+
+if (args.Contains("--bootstrap"))
+{
+    var bootstrapApp = builder.Build();
+
+    using var scope = bootstrapApp.Services.CreateScope();
+    var bootstrap = scope.ServiceProvider.GetRequiredService<BootstrapIngestionService>();
+    var repoRoot = args.FirstOrDefault(a => !a.StartsWith("--")) ?? Directory.GetCurrentDirectory();
+
+    await bootstrap.RunAsync(repoRoot);
+    return;
+}
 
 builder.Services.AddHostedService<SourceMonitorService>();
 builder.Services.AddHostedService<PatternDiscoveryService>();
