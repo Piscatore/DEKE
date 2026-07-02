@@ -48,7 +48,9 @@ CREATE TABLE facts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ,
     is_outdated BOOLEAN NOT NULL DEFAULT FALSE,
-    outdated_reason VARCHAR(200)
+    outdated_reason VARCHAR(200),
+    valid_from TIMESTAMPTZ,
+    valid_until TIMESTAMPTZ
 );
 
 CREATE INDEX idx_facts_embedding ON facts
@@ -121,6 +123,24 @@ CREATE TABLE learning_logs (
 );
 
 CREATE INDEX idx_learning_logs_domain ON learning_logs(domain, started_at DESC);
+
+-- Interaction logs: Per-query search/context interaction capture
+CREATE TABLE interaction_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    domain VARCHAR(100),
+    query TEXT NOT NULL,
+    model VARCHAR(200),
+    returned_fact_ids UUID[] DEFAULT '{}',
+    scores REAL[] DEFAULT '{}',
+    min_similarity REAL,
+    result_count INT NOT NULL DEFAULT 0,
+    duration_ms INT NOT NULL DEFAULT 0,
+    federation JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_interaction_logs_created ON interaction_logs(created_at DESC);
+CREATE INDEX idx_interaction_logs_domain ON interaction_logs(domain, created_at DESC);
 
 -- Federation peers: Known DEKE instances for cross-domain queries
 CREATE TABLE federation_peers (
