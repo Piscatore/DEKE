@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
+using Deke.Infrastructure.Embeddings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -13,6 +15,9 @@ public class FederatedSearchService : IFederatedSearchService
     private readonly IFederationPeerRepository _peerRepo;
     private readonly IEmbeddingService _embeddings;
     private readonly FederationClient _federationClient;
+    private readonly ITrustScoringService _trustScoring;
+    private readonly IInteractionLogRepository _interactionLogs;
+    private readonly EmbeddingsConfig _embeddingsConfig;
     private readonly IOptions<FederationConfig> _config;
     private readonly ILogger<FederatedSearchService> _logger;
 
@@ -21,6 +26,9 @@ public class FederatedSearchService : IFederatedSearchService
         IFederationPeerRepository peerRepo,
         IEmbeddingService embeddings,
         FederationClient federationClient,
+        ITrustScoringService trustScoring,
+        IInteractionLogRepository interactionLogs,
+        EmbeddingsConfig embeddingsConfig,
         IOptions<FederationConfig> config,
         ILogger<FederatedSearchService> logger)
     {
@@ -28,6 +36,9 @@ public class FederatedSearchService : IFederatedSearchService
         _peerRepo = peerRepo;
         _embeddings = embeddings;
         _federationClient = federationClient;
+        _trustScoring = trustScoring;
+        _interactionLogs = interactionLogs;
+        _embeddingsConfig = embeddingsConfig;
         _config = config;
         _logger = logger;
     }
@@ -88,10 +99,10 @@ public class FederatedSearchService : IFederatedSearchService
             }
         }
 
-        sw.Stop();
-
         // 4. Merge and score results
         var merged = MergeResults(config, localResults, federatedResults, limit);
+
+        sw.Stop();
 
         // 5. Build response
         var federationMetadata = peersConsulted.Count > 0 || peersSkipped.Count > 0
@@ -106,6 +117,12 @@ public class FederatedSearchService : IFederatedSearchService
             }
             : null;
 
+        // Only log top-level interactions, not inbound peer-relayed subqueries, to avoid recording every hop.
+        if (federation is null)
+        {
+            await LogInteractionAsync(request, merged, minSimilarity, sw.Elapsed, federationMetadata, ct);
+        }
+
         return new SearchResponse
         {
             Query = request.Query,
@@ -115,6 +132,40 @@ public class FederatedSearchService : IFederatedSearchService
             SearchDuration = sw.Elapsed,
             Federation = federationMetadata
         };
+    }
+
+    private async Task LogInteractionAsync(
+        FederatedSearchRequest request,
+        List<FactSearchResult> results,
+        float minSimilarity,
+        TimeSpan duration,
+        FederationMetadata? federationMetadata,
+        CancellationToken ct)
+    {
+        try
+        {
+            var log = new InteractionLog
+            {
+                Domain = request.Domain,
+                Query = request.Query,
+                Model = _embeddingsConfig.ModelPath,
+                ReturnedFactIds = results.Select(r => r.Id).ToList(),
+                Scores = results.Select(r => r.Similarity).ToList(),
+                MinSimilarity = minSimilarity,
+                ResultCount = results.Count,
+                DurationMs = (int)duration.TotalMilliseconds,
+                Federation = federationMetadata is null
+                    ? null
+                    : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                        JsonSerializer.Serialize(federationMetadata))
+            };
+
+            await _interactionLogs.AddAsync(log, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to write interaction log for query {Query}", request.Query);
+        }
     }
 
     public async Task<ContextResponse> GetContextAsync(
@@ -248,13 +299,16 @@ public class FederatedSearchService : IFederatedSearchService
         List<(FactSearchResult Result, string PeerInstanceId, int Hops)> federatedResults,
         int limit)
     {
-        var scored = new List<(FactSearchResult Result, float Score)>();
+        var now = DateTimeOffset.UtcNow;
+        var scored = new List<(FactSearchResult Result, double Score)>();
 
         // Score local results
         var localWeight = config.GetLocalityWeight(0);
         foreach (var result in localResults)
         {
-            var score = result.Similarity * result.Confidence * localWeight;
+            var score = _trustScoring.Score(
+                result.Similarity, result.Confidence, result.SourceCredibility,
+                result.CreatedAt, result.ValidFrom, result.ValidUntil, localWeight, now);
             scored.Add((result, score));
         }
 
@@ -262,7 +316,9 @@ public class FederatedSearchService : IFederatedSearchService
         foreach (var (result, peerInstanceId, hops) in federatedResults)
         {
             var weight = config.GetLocalityWeight(hops);
-            var score = result.Similarity * result.Confidence * weight;
+            var score = _trustScoring.Score(
+                result.Similarity, result.Confidence, result.SourceCredibility,
+                result.CreatedAt, result.ValidFrom, result.ValidUntil, weight, now);
             var tagged = result with
             {
                 Provenance = new ResultProvenance

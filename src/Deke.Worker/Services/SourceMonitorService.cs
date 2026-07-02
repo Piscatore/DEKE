@@ -46,6 +46,7 @@ public class SourceMonitorService : BackgroundService
         var harvesters = scope.ServiceProvider.GetRequiredService<IEnumerable<IHarvester>>();
         var embeddingService = scope.ServiceProvider.GetRequiredService<IEmbeddingService>();
         var extractionService = scope.ServiceProvider.GetRequiredService<IExtractionService>();
+        var chunker = scope.ServiceProvider.GetRequiredService<IChunker>();
 
         var harvesterMap = harvesters.ToDictionary(h => h.SupportedType);
         var dueSources = await sourceRepo.GetDueForCheckAsync(ct);
@@ -81,23 +82,30 @@ public class SourceMonitorService : BackgroundService
                     var factsAdded = 0;
                     foreach (var text in result.ExtractedTexts)
                     {
-                        var extractedFacts = await extractionService.ExtractFactsAsync(text, source.Domain, source.Url, ct);
+                        var chunks = await chunker.ChunkAsync(text, ct);
 
-                        foreach (var extracted in extractedFacts)
+                        foreach (var chunk in chunks)
                         {
-                            var embedding = embeddingService.GenerateEmbedding(extracted.Content);
-                            var fact = new Fact
-                            {
-                                Content = extracted.Content,
-                                Domain = source.Domain,
-                                Embedding = embedding,
-                                Confidence = extracted.Confidence * source.Credibility,
-                                SourceId = source.Id,
-                                Entities = extracted.Entities
-                            };
+                            var extractedFacts = await extractionService.ExtractFactsAsync(chunk, source.Domain, source.Url, ct);
 
-                            await factRepo.AddAsync(fact, ct);
-                            factsAdded++;
+                            foreach (var extracted in extractedFacts)
+                            {
+                                var embedding = embeddingService.GenerateEmbedding(extracted.Content);
+                                var fact = new Fact
+                                {
+                                    Content = extracted.Content,
+                                    Domain = source.Domain,
+                                    Embedding = embedding,
+                                    // Source credibility is applied at merge-time (ITrustScoringService), not here,
+                                    // to avoid double-counting it in ranking.
+                                    Confidence = extracted.Confidence,
+                                    SourceId = source.Id,
+                                    Entities = extracted.Entities
+                                };
+
+                                await factRepo.AddAsync(fact, ct);
+                                factsAdded++;
+                            }
                         }
                     }
 
