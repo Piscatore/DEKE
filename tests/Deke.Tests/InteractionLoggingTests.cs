@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Federation;

@@ -1,4 +1,4 @@
-using Deke.Infrastructure.Trust;
+﻿using Deke.Infrastructure.Trust;
 
 namespace Deke.Tests;
 

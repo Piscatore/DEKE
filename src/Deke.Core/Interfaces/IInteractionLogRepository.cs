@@ -1,4 +1,4 @@
-using Deke.Core.Models;
+﻿using Deke.Core.Models;
 
 namespace Deke.Core.Interfaces;
 

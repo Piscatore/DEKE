@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Microsoft.Extensions.AI;
 
 namespace Deke.Infrastructure.Embeddings;

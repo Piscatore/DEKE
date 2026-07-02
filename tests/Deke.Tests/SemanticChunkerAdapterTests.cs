@@ -1,4 +1,4 @@
-using Deke.Infrastructure.Extraction;
+﻿using Deke.Infrastructure.Extraction;
 using Microsoft.Extensions.AI;
 
 namespace Deke.Tests;

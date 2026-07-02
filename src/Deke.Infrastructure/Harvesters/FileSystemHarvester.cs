@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;

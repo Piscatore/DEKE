@@ -1,4 +1,4 @@
-using Deke.Core.Interfaces;
+﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
 using Deke.Infrastructure.Extraction;
 using Deke.Infrastructure.Harvesters;
