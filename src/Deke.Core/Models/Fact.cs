@@ -17,6 +17,8 @@ public class Fact
     public DateTimeOffset? UpdatedAt { get; set; }
     public bool IsOutdated { get; set; }
     public string? OutdatedReason { get; set; }
+    public DateTimeOffset? ValidFrom { get; set; }
+    public DateTimeOffset? ValidUntil { get; set; }
 
     // Navigation
     public Source? Source { get; set; }

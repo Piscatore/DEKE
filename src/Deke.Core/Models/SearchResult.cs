@@ -9,7 +9,10 @@ public record FactSearchResult
     public float Similarity { get; init; }
     public Guid? SourceId { get; init; }
     public string? SourceUrl { get; init; }
+    public float SourceCredibility { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? ValidFrom { get; init; }
+    public DateTimeOffset? ValidUntil { get; init; }
     public ResultProvenance? Provenance { get; init; }
 }
 

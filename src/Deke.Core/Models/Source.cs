@@ -31,5 +31,6 @@ public enum SourceType
     WebPage,
     Rss,
     Api,
-    Manual
+    Manual,
+    File
 }
