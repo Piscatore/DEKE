@@ -40,6 +40,8 @@ public static class DapperConfig
         // Register enum type handlers
         SqlMapper.AddTypeHandler(new EnumTypeHandler<SourceType>());
         SqlMapper.AddTypeHandler(new EnumTypeHandler<PatternType>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<ConfidenceBand>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<Stakes>());
 
         // Dapper: map underscore columns to PascalCase properties
         DefaultTypeMap.MatchNamesWithUnderscores = true;
