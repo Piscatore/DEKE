@@ -11,24 +11,25 @@ What DEKE delivers today:
 | **MCP Tools** | `consult_domain_expert` (federated search), `get_context` (LLM-formatted context), `list_available_domains` (local + peer domains). |
 | **Federation (Phase 1--2)** | Peer discovery via manifest. Federated search with delegation, provenance tracking, loop prevention, and locality-weighted scoring. |
 | **Background Services** | Source monitor (15 min), pattern discovery (1 hr), learning cycle (2 hr), peer health check (5 min). |
+| **Advisory Pipeline (MVP)** | 7-stage knowledge-leverage pipeline producing grounded, confidence-banded advisory responses with cited facts and knowledge-gap disclosure. Software Product Advisor domain adapter. Model routing across Anthropic (haiku/sonnet) and Ollama backends via `IChatClient`. Append-only `advisory_interactions` audit table. `GetDomainAdvice` MCP tool. |
 | **Infrastructure** | .NET 9, PostgreSQL 16 + pgvector, ONNX embeddings (all-MiniLM-L6-v2), Dapper, Polly resilience. |
 
-**Not yet built**: advisory pipeline, domain adapters, trust layer, semantic chunking, LLM-generated responses.
+**Not yet built**: simplified trust layer (source credibility, fact confidence, temporal validity), semantic chunking, bootstrap ingestion into the Software Product Advisor domain.
 
 ## MVP Target
 
-The first meaningful milestone: DEKE answering domain questions better than a language model alone, with cited and confidence-scored facts.
+The first meaningful milestone: DEKE answering domain questions better than a language model alone, with cited and confidence-scored facts. The knowledge-leverage advisory pipeline (items 3-6, plus advisory interaction logging from item 8) is now delivered; the remaining items are knowledge-base groundwork.
 
-| # | Work Item | Scope | Label |
-|---|-----------|-------|-------|
-| 1 | **Simplified trust layer** | Add `credibility_score` to sources, `confidence_score` to facts, optional `valid_from`/`valid_until` on facts. Schema migration + scoring function. | knowledge-base |
-| 2 | **Semantic chunking (R1)** | Integrate SemanticChunker.NET. Replace single-fact extraction with semantically coherent chunks. | knowledge-base |
-| 3 | **Advisory contracts (P2-1)** | AdvisoryRequest, AdvisoryResponse, IAdvisoryAdapter, ConfidenceBand, DefaultAdvisoryAdapter. Compile-only milestone. | knowledge-leverage |
-| 4 | **Advisory pipeline (P2-2)** | 7-stage pipeline: validate, retrieve, assemble context, construct prompt, call model, assemble response, log. Anthropic API integration. | knowledge-leverage |
-| 5 | **Software Product Advisor (P2-3)** | First domain adapter. Custom system prompt, fact weighting, version-aware context. Domain activation. | knowledge-leverage |
-| 6 | **GetDomainAdvice MCP tool (P2-4)** | MCP tool exposing advisory pipeline to Claude Code. | knowledge-leverage |
-| 7 | **Bootstrap ingestion** | Ingest DEKE design session history into Software Product Advisor domain. Primary-source, high-confidence seed content. | knowledge-base |
-| 8 | **Interaction logging** | Log every advisory interaction (query, cited facts, model used, confidence). Data capture for future analysis. No learning loop yet. | knowledge-leverage |
+| # | Work Item | Scope | Label | Status |
+|---|-----------|-------|-------|--------|
+| 1 | **Simplified trust layer** | Add `credibility_score` to sources, `confidence_score` to facts, optional `valid_from`/`valid_until` on facts. Schema migration + scoring function. | knowledge-base | Planned |
+| 2 | **Semantic chunking (R1)** | Integrate SemanticChunker.NET. Replace single-fact extraction with semantically coherent chunks. | knowledge-base | Planned |
+| 3 | **Advisory contracts (P2-1)** | AdvisoryRequest, AdvisoryResponse, IAdvisoryAdapter, ConfidenceBand, DefaultAdvisoryAdapter. Compile-only milestone. | knowledge-leverage | Done |
+| 4 | **Advisory pipeline (P2-2)** | 7-stage pipeline: validate, retrieve, assemble context, construct prompt, call model, assemble response, log. Anthropic API integration. | knowledge-leverage | Done |
+| 5 | **Software Product Advisor (P2-3)** | First domain adapter. Custom system prompt, fact weighting, version-aware context. Domain activation. | knowledge-leverage | Done |
+| 6 | **GetDomainAdvice MCP tool (P2-4)** | MCP tool exposing advisory pipeline to Claude Code. | knowledge-leverage | Done |
+| 7 | **Bootstrap ingestion** | Ingest DEKE design session history into Software Product Advisor domain. Primary-source, high-confidence seed content. | knowledge-base | Planned |
+| 8 | **Interaction logging** | Log every advisory interaction (query, cited facts, model used, confidence). Data capture for future analysis. No learning loop yet. | knowledge-leverage | Done (advisory path, via `advisory_interactions` audit table) |
 
 ## Next Priorities
 
@@ -65,3 +66,4 @@ These are intellectually interesting but require user volume and query data that
 | 2026-04 | Federation Phase 2 | Federated search, provenance, MCP tools. |
 | 2026-04 | Documentation overhaul | Three-branch doc structure (product/architecture/science). |
 | 2026-04 | Product checkpoint | Scope reduction: two-package model, simplified pipeline, MVP focus. |
+| 2026-07-03 | Advisory Pipeline MVP | Contracts, 7-stage pipeline, Software Product Advisor adapter, GetDomainAdvice MCP tool. Advisory interaction logging via new `advisory_interactions` audit table. MVP items 3-6 (and the advisory path of item 8) delivered. |

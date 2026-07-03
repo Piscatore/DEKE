@@ -58,6 +58,19 @@ Decisions captured during design sessions, recorded with date, decision, and rat
 | 2026-04 | Reframe knowledge compensation as hypothesis to validate, not architectural invariant | The principle is directionally sound (better context improves smaller model output) but unproven. Model costs are declining faster than knowledge bases grow. Requires empirical validation: does DEKE + Haiku outperform Haiku alone on a standard question set? |
 | 2026-04 | Move to two-package product model (Knowledge Base + Knowledge Leverage) | Focus on delivering value (grounded advisory responses) before learning from it (evolution). Package 3 becomes viable only after multiple domains, sufficient query volume, and a measurable quality problem that manual curation cannot solve. |
 
+### 2026-07-03 Advisory Pipeline MVP Implementation
+
+Decisions made while implementing the knowledge-leverage advisory pipeline (MVP items 3-6). Several diverge from the earlier specification; the divergences and their reasons are recorded here.
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-07-03 | Use `Microsoft.Extensions.AI` `IChatClient` for the advisory model call rather than the bespoke `ILlmService` | `Microsoft.Extensions.AI.Abstractions` was already referenced for embeddings, so no new dependency surface. `IChatClient` carries `ModelId` and `Usage` natively, which feed the audit record directly. Both `Anthropic.SDK` 5.10.0 and `OllamaSharp` 5.4.25 implement `IChatClient`, giving one abstraction across cloud and local backends. The existing `ILlmService` (Gemini/OpenAI/NoOp) is left untouched to avoid disturbing unrelated call sites. |
+| 2026-07-03 | Register two keyed `IChatClient` backends (`anthropic` + `ollama`), not three | A single `AnthropicClient` serves both haiku and sonnet; the model is chosen per call via `ChatOptions.ModelId`. A separate keyed client per model would duplicate configuration and credentials for no benefit. |
+| 2026-07-03 | Add a new append-only `advisory_interactions` audit table, separate from the search-shaped `interaction_logs` | The accountability guardrail (G2 Response Audit Record) requires per-response traceability that the search log's shape cannot hold. The new table records query, domain, stakes, model, cited_fact_ids with parallel fact_confidences, confidence_band, knowledge_gaps, raw_output, and contains_conflicting. Keeping it separate avoids overloading the search log and preserves append-only semantics for the audit trail. |
+| 2026-07-03 | Model routing driven by a composite knowledge_depth_score | knowledge_depth_score = mean(top-K fact trust) x coverage x top similarity. haiku is the default when depth >= 0.6; escalate to sonnet when ConfidenceBand is Low with High stakes (or on explicit caller override) or when knowledge is thin; route to ollama only when the domain's `AllowLocalModel` is set AND depth >= 0.75. This honours the zero-cost priority (prefer local when knowledge is deep enough to compensate) while escalating to a stronger cloud model exactly when grounding is weak and stakes are high. |
+| 2026-07-03 | Use current real Anthropic model IDs: `claude-haiku-4-5` (default) and `claude-sonnet-5` (escalation) | The specification's `claude-sonnet-4-6` was stale and does not correspond to a released model. Pinning to real, current IDs keeps the routing policy executable. |
+| 2026-07-03 | Advisory retrieval is local-only for the MVP (`IFactRepository.SearchAsync`) | Grounding the advisory response on locally-owned facts keeps provenance and confidence signals fully controlled for the first release. Federation-grounded retrieval (drawing peer facts into advisory context) is deferred until the local path is validated. |
+
 ---
 
 ## Guardrails and Risk Analysis

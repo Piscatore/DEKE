@@ -21,8 +21,8 @@ For what DEKE is and why it exists, see [product/overview.md](../product/overvie
 | Embeddings | ONNX Runtime | 1.17+ | Microsoft.ML.OnnxRuntime |
 | Embedding model | all-MiniLM-L6-v2 | — | 384-dimensional, local inference |
 | MCP server | ModelContextProtocol SDK | — | Tool registration via attributes |
-| LLM (planned) | Anthropic API | — | claude-haiku-4-5, claude-sonnet-4-6 |
-| LLM local (planned) | Ollama | — | Zero-cost option for mature domains |
+| LLM | Anthropic API (via `IChatClient`) | — | claude-haiku-4-5, claude-sonnet-5 |
+| LLM local | Ollama (via `IChatClient`) | — | Zero-cost option for mature domains |
 | Container runtime | Podman | — | podman-compose for local dev |
 | Serialization | System.Text.Json | — | JSONB column mapping |
 
@@ -390,11 +390,6 @@ Federation headers (inbound): `X-Federation-Request-Id`, `X-Federation-Visited`,
 | `consult_domain_expert` | Semantic search with federation awareness. Accepts query, domain, optional minimum similarity and max results. Returns facts with similarity scores, source URLs, and federation provenance. |
 | `get_context` | Returns facts formatted as markdown context for LLM consumption. Accepts query, domain, and token budget. |
 | `list_available_domains` | Lists all domains available locally and across federated peers. Returns domain names with fact counts and peer source. |
-
-### Planned (Package 2)
-
-| Tool | Description |
-|------|-------------|
 | `GetDomainAdvice` | Full advisory pipeline call. Accepts query, domain, optional stakes hint and citation preference. Returns AdvisoryResponse with confidence band, cited facts, knowledge gaps, and escalation status. Formatted as markdown for Claude Code consumption. |
 
 ---
@@ -548,14 +543,16 @@ Package 2 (Knowledge Leverage) transforms accumulated knowledge into grounded ad
 public interface IAdvisoryAdapter
 {
     string SystemPrompt();
-    IReadOnlyList<KnowledgeFact> WeightFacts(IReadOnlyList<KnowledgeFact> facts, string query);
-    string FormatContext(IReadOnlyList<KnowledgeFact> facts);
-    string CalibrateTrust(TrustMetadata trustMetadata);
+    IReadOnlyList<FactSearchResult> WeightFacts(IReadOnlyList<FactSearchResult> facts, string query);
+    string FormatContext(IReadOnlyList<FactSearchResult> facts);
+    string CalibrateTrust(double trustScore);
     DomainActivationCriteria ActivationCriteria { get; }
 }
 ```
 
-New domains implement this interface. DefaultAdvisoryAdapter provides sensible defaults for domains without a custom adapter (~100-200 lines per custom adapter).
+Facts flow through the adapter as `FactSearchResult` (the retrieval type returned by `IFactRepository.SearchAsync`), and trust is a composite `double` score that `CalibrateTrust` translates into natural-language guidance for the model. `DomainActivationCriteria` carries the `AllowLocalModel` flag (adapter-owned) that gates the Ollama backend, alongside `Domain` and `MinFacts`.
+
+New domains implement this interface. `DefaultAdvisoryAdapter` provides sensible defaults for domains without a custom adapter; `SoftwareProductAdvisorAdapter` is the first custom domain adapter (domain `software-product`), showing that a custom adapter is ~100-200 lines.
 
 ### Confidence Bands
 
@@ -573,10 +570,10 @@ The honesty constraint is enforced at the shared core level: no adapter can over
 | Backend | Condition |
 |---------|-----------|
 | claude-haiku-4-5 (Anthropic API) | Default. Selected when knowledge_depth_score >= 0.6 |
-| claude-sonnet-4-6 (Anthropic API) | ConfidenceBand = Low with High stakes, or explicit caller override |
-| Ollama (local) | domain.AllowLocalModel = true AND knowledge_depth_score >= 0.75 |
+| claude-sonnet-5 (Anthropic API) | ConfidenceBand = Low with High stakes, or explicit caller override, or when knowledge is thin |
+| Ollama (local) | domain.AllowLocalModel = true AND knowledge_depth_score >= 0.75 (zero-cost priority) |
 
-As the knowledge base deepens, the minimum capable model decreases -- the knowledge compensation principle.
+Both Anthropic backends are served by a single keyed `IChatClient` (`anthropic`); the model is chosen per call via `ChatOptions.ModelId`. As the knowledge base deepens, the minimum capable model decreases -- the knowledge compensation principle.
 
 ### Fixed Contracts
 
@@ -602,7 +599,7 @@ public record AdvisoryResponse
 }
 ```
 
-The `ContainsConflictingEvidence` field (from Guardrail G5) is set when Package 1 contradiction resolution is triggered, even when the served response is high-confidence.
+The `ContainsConflictingEvidence` field (from Guardrail G5) is set when Package 1 contradiction resolution is triggered, even when the served response is high-confidence. `SessionId` and `PriorExchanges` are accepted on the request contract but are not yet consumed by the MVP prompt (multi-turn continuity is deferred -- see OI-04 in [decisions.md](decisions.md)).
 
 ---
 
@@ -629,7 +626,7 @@ The Evolution Engine is a research direction exploring self-improving advisory q
     "InstanceId": "deke-primary",
     "InstanceName": "DEKE Primary",
     "ProtocolVersion": "1",
-    "Domains": ["fishing", "software-product-advisor"],
+    "Domains": ["fishing", "software-product"],
     "Capabilities": ["search", "context"],
     "HealthCheckIntervalMinutes": 5,
     "MaxHops": 3,
