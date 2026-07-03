@@ -1,5 +1,6 @@
 ﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
+using Deke.Infrastructure.Advisory;
 using Deke.Infrastructure.Data;
 using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;
@@ -118,6 +119,24 @@ public static class ServiceCollectionExtensions
                 services.AddSingleton<ILlmService, NoOpLlmService>();
                 break;
         }
+
+        return services;
+    }
+
+    public static IServiceCollection AddDekeAdvisory(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<AdvisoryConfig>(configuration.GetSection("Advisory"));
+
+        var config = new AdvisoryConfig();
+        configuration.GetSection("Advisory").Bind(config);
+        services.AddAdvisoryChatClients(config);
+
+        services.AddSingleton<ILlmSelectionPolicy, LlmSelectionPolicy>();
+        services.AddScoped<IAdvisoryInteractionRepository, AdvisoryInteractionRepository>();
+        services.AddScoped<IAdvisoryAdapter, SoftwareProductAdvisorAdapter>();
+        services.AddScoped<IAdvisoryAdapter, DefaultAdvisoryAdapter>();
+        services.AddScoped<IAdvisoryPipeline, AdvisoryPipeline>();
 
         return services;
     }

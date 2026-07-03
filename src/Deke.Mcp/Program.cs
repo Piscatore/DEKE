@@ -21,12 +21,14 @@ builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
 builder.Services.AddDekeLlm(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
+builder.Services.AddDekeAdvisory(builder.Configuration);
 
 // MCP Server with stdio transport
 builder.Services.AddMcpServer()
     .WithStdioServerTransport()
     .WithTools<SearchTools>()
-    .WithTools<FactTools>();
+    .WithTools<FactTools>()
+    .WithTools<AdvisoryTools>();
 
 var host = builder.Build();
 await host.RunAsync();
