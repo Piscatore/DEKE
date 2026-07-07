@@ -52,6 +52,16 @@ This index provides a navigable overview of all DEKE project documentation.
 | [TOOLING.md](TOOLING.md) | Living | MCP/plugin/CLI tool inventory for DEKE sessions, KEEP/DISCONNECT verdicts, verification suite |
 | [adr/](adr/) | Living | Architecture Decision Records (tooling, design, naming) |
 
+## Overhaul Artifacts
+
+Permanent artifacts produced by the temporary `/overhaul` subproject (see
+`/overhaul/OVERHAUL-SKETCH-v0.2.md`). Uppercase by deliberate exception — see
+Conventions below.
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [GLOSSARY.md](GLOSSARY.md) | Living | Canonical ontology: naming terms, deprecated aliases, approval status |
+
 ## Documentation Map
 
 ```
@@ -62,6 +72,7 @@ DEKE/
 ├── archive.zip                         Original documentation (docx files)
 └── docs/
     ├── INDEX.md                        This file
+    ├── GLOSSARY.md                     Canonical ontology (Overhaul artifact)
     ├── roadmap.md                      Implementation phases and milestones
     ├── product/                        "What" — system model and behavior
     │   ├── overview.md                 Vision and two-package architecture

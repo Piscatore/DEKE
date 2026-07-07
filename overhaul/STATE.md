@@ -7,6 +7,14 @@
 
 ---
 
+## 2026-07-07 — OP-003 Glossary ingestion (done)
+
+- Ingested `thoughts/shared/namingissues.md` (9 findings) → `docs/GLOSSARY.md`, 3 PROPOSED rows: Evolution Engine (was "Package 3"/"P3"), P1-N (Package 1 phase shorthand), IChunker/SemanticChunkerAdapter (was IChunkingService/SemanticChunkingService).
+- Escalated 4 proposed ADRs: ADR-0002 (naming: Evolution Engine/Package 3 status disagreement), ADR-0003 (naming: Package 1 phase shorthand + undefined Phase 4), ADR-0004 (design: LLM backend docs vs. code drift), ADR-0005 (design: federation ranking formula doc vs. code drift).
+- Logged 4 items in PARKING-LOT.md: chunking status doc bug, top-level-docs package-model gap, dangling SPECIFICATION.md reference, roadmap.md Phase 3 label drop.
+- **Next:** OP-004a..n — mapping sweeps (PROJECT-MAP.md entries).
+- Open questions for Mikael: approve/reject/amend ADR-0002 through ADR-0005; approve/reject/amend the 3 PROPOSED glossary rows.
+
 ## 2026-07-07 — OP-002 Tooling audit (done)
 
 - Inventoried CLI/MCP/plugin tooling actually available in DEKE sessions; wrote `/docs/TOOLING.md` (inventory, verification suite, model/thinking tiers).
