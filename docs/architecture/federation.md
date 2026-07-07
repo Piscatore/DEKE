@@ -113,7 +113,7 @@ Response:
   "protocolVersion": "1",
   "domains": [
     { "name": "fishing", "factCount": 342 },
-    { "name": "software-product-advisor", "factCount": 47 }
+    { "name": "software-product", "factCount": 47 }
   ],
   "capabilities": ["search", "context"],
   "federationEnabled": true
@@ -302,7 +302,7 @@ Response includes:
     "InstanceId": "deke-primary",
     "InstanceName": "DEKE Primary Instance",
     "ProtocolVersion": "1",
-    "Domains": ["fishing", "software-product-advisor"],
+    "Domains": ["fishing", "software-product"],
     "Capabilities": ["search", "context"],
     "HealthCheckIntervalMinutes": 5,
     "MaxHops": 3,

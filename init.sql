@@ -142,6 +142,25 @@ CREATE TABLE interaction_logs (
 CREATE INDEX idx_interaction_logs_created ON interaction_logs(created_at DESC);
 CREATE INDEX idx_interaction_logs_domain ON interaction_logs(domain, created_at DESC);
 
+-- Advisory interactions: Append-only audit record of advisory pipeline responses
+CREATE TABLE advisory_interactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    domain VARCHAR(100),
+    query TEXT NOT NULL,
+    stakes VARCHAR(20) NOT NULL DEFAULT 'Low',
+    model VARCHAR(200) NOT NULL,
+    cited_fact_ids UUID[] DEFAULT '{}',
+    fact_confidences REAL[] DEFAULT '{}',
+    confidence_band VARCHAR(20) NOT NULL,
+    knowledge_gaps JSONB NOT NULL DEFAULT '[]',
+    raw_output TEXT,
+    contains_conflicting BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_advisory_interactions_created ON advisory_interactions(created_at DESC);
+CREATE INDEX idx_advisory_interactions_domain ON advisory_interactions(domain, created_at DESC);
+
 -- Federation peers: Known DEKE instances for cross-domain queries
 CREATE TABLE federation_peers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -1,0 +1,1 @@
+- Investigate and add vectorless rag and a very intelligent hybrid model that uses the best from both worlds
