@@ -62,6 +62,7 @@ Conventions below.
 |----------|------|-------------|
 | [GLOSSARY.md](GLOSSARY.md) | Living | Canonical ontology: naming terms, deprecated aliases, approval status |
 | [PROJECT-MAP.md](PROJECT-MAP.md) | Living | Component inventory built up region by region via mapping sweeps (OP-004a..n) |
+| [INTENT.md](INTENT.md) | Living | Distilled design intentions, built up thread by thread via OP-005a..n |
 
 ## Documentation Map
 
@@ -75,6 +76,7 @@ DEKE/
     ├── INDEX.md                        This file
     ├── GLOSSARY.md                     Canonical ontology (Overhaul artifact)
     ├── PROJECT-MAP.md                  Component inventory (Overhaul artifact)
+    ├── INTENT.md                       Distilled design intentions (Overhaul artifact)
     ├── roadmap.md                      Implementation phases and milestones
     ├── product/                        "What" — system model and behavior
     │   ├── overview.md                 Vision and two-package architecture

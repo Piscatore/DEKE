@@ -111,6 +111,11 @@ Format:
   test-coverage packet; the `ApiKeyAuthHandler` gap specifically worth
   picking up together with whichever packet implements ADR-0008's decision.
 
+## 2026-07-07 — docs/product/overview.md still says "Two-Package Architecture" after ADR-0002 promoted Evolution Engine back to a third package
+- Raised during: OP-005d
+- What: `docs/product/overview.md:31` heads its architecture section "## The Two-Package Architecture" and its package table (`:35`) lists only two packages — a leftover from the `product-checkpoint-fixes` work item, which deliberately demoted Package 3 (Evolution Engine) out of the product model into a research/vision document. ADR-0002 (accepted, OP-003) later reversed that: `docs/GLOSSARY.md`'s Evolution Engine row states it is "Promoted to full parity with Package 1 and Package 2 under DEKE's Three-Package Architecture — an active package, not deferred research." `overview.md` was never updated to reflect the reversal.
+- Why deferred: decision-ahead-of-doc gap (ADR-0002 already adjudicated the substance; only the doc text is stale), not a fresh design disagreement — doesn't warrant a new ADR. Flagged for a future OP-009 spec-refactor packet: rewrite `overview.md`'s architecture section for three packages, consistent with the already-approved glossary entry.
+
 ## 2026-07-07 — GetDomainAdvice is the sole PascalCase MCP tool name
 - Raised during: OP-004d
 - What: `AdvisoryTools.cs`'s MCP tool is named `GetDomainAdvice` (PascalCase, via `[McpServerTool(Name = "GetDomainAdvice")]`). Every other MCP tool across `Tools/FactTools.cs` and `Tools/SearchTools.cs` uses snake_case (`add_fact`, `get_fact`, `get_domain_stats`, `consult_domain_expert`, `get_context`, `list_available_domains`). `specification.md` documents it as `GetDomainAdvice` too, so this isn't a doc/code mismatch — just an internal naming-convention inconsistency.

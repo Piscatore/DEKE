@@ -7,6 +7,168 @@
 
 ---
 
+## 2026-07-07 — OP-006 + OP-007 run lightweight (done, both packets closed)
+
+- By execution time, **all 9 ADRs were already `accepted` and all 3
+  glossary rows already `APPROVED`** (everything adjudicated ad-hoc, out of
+  DAG order, across OP-002..005) — OP-006/007's original scope (collect+
+  adjudicate a backlog of open ADR/glossary questions) was almost entirely
+  pre-empted, same pattern as OP-008b's cancellation. Asked Mikael directly
+  (3 closed questions via `AskUserQuestion`) whether to skip both packets
+  entirely or still run a lightweight pass — **chose to run lightweight**.
+- **3 questions answered:** (1) OP-005a's "breaking changes OK" aside is a
+  **general DEKE-wide stance**, not federation-specific — `docs/INTENT.md`
+  updated in place, no ADR needed. (2) OP-005d's `adhoqnotes.md` vectorless-
+  RAG-hybrid idea is **promoted to a real packet** — recorded as new
+  **ADR-0010** (accepted), deferred to OP-011 (roadmap rebuild) for sizing
+  since it needs research first, not an immediate OP-008 slot;
+  `docs/INTENT.md`'s adhoqnotes.md section updated to cite the resolution
+  instead of sitting as a bare inferred flag. (3) confirmed: run OP-006/007
+  lightweight rather than skip.
+- Wrote `overhaul/packets/OP-006.md` and `OP-007.md` (both `Status: done`,
+  documenting the lightweight run rather than left as unused DAG
+  placeholders).
+- **Exit-criteria check** (§8, `OVERHAUL-SKETCH-v0.2.md`): criteria 1
+  (no PROPOSED glossary rows), 2 (no unescalated design smells /
+  LOW-confidence map entries), 3 (no unconfirmed INTENT sections), and 4
+  (no proposed ADRs) are now **all satisfied**. Criteria 5-8 (tooling
+  re-verification, spec lint, roadmap rebuild, fresh-agent acceptance test)
+  remain for OP-010..013.
+- 0 new parking-lot items this round (the one from OP-005d already logged).
+- **Next:** code-capable work can now proceed in parallel — **OP-008a**
+  (Three-Package Architecture doc reconciliation, ADR-0002), **OP-008c**
+  (merge `Llm/` onto `IChatClient`, ADR-0007), **OP-008d** (Api key
+  fail-fast, ADR-0008), **OP-008e** (merge fact-derived domains into
+  `list_available_domains`, ADR-0009) — all `pending`, all code-capable,
+  `OP-008b` stays `CANCELLED` (ADR-0006 mooted it). **OP-009a/b** (spec
+  refactor: P1-N/Phase renumber, federation.md ranking formula) can run in
+  parallel too. Whoever picks up next should read the specific `OP-008x`/
+  `OP-009x` packet file for its own context budget — this STATE.md entry is
+  not itself a packet to execute.
+- Open questions for Mikael: none new.
+
+## 2026-07-07 — OP-005d standalone briefs + ad-hoc notes intent distillation (done, OP-005 series complete)
+
+- Appended 5 sections to `docs/INTENT.md` from the 4 remaining `thoughts/`
+  files (~314 lines): docs' three-branch Diataxis/arc42-lite separation
+  (already fully executed, matches `docs/INDEX.md` verbatim), the
+  present-tense-product-model/honest-roadmap documentation philosophy
+  (explains *why* several existing PARKING-LOT doc-drift items are drift, as
+  instances of one general rule), Package 3's demote-then-repromote history
+  (`product-checkpoint-fixes` demoted it, ADR-0002 later reversed that —
+  flagged explicitly so the reversal isn't missed), the Llm/ Gemini-OpenAI
+  system's original purpose (unblock Advisory — later superseded when
+  Advisory adopted `IChatClient` instead, explaining ADR-0006/0007's "looks
+  orphaned" finding), and `adhoqnotes.md`'s one-line vectorless-RAG idea
+  (entirely `(inferred, unconfirmed)` per the packet's own instruction, no
+  surrounding context exists to ground it further).
+- **New PARKING-LOT item logged** (not an ADR — decision-ahead-of-doc, not a
+  fresh design disagreement): `docs/product/overview.md` still reads "The
+  Two-Package Architecture" and lists only 2 packages, even though ADR-0002
+  (accepted, OP-003) already promoted Evolution Engine back to a full third
+  package — `overview.md` was never updated after that reversal. Flagged for
+  a future OP-009 packet.
+- No new ADR escalated. `llm-provider-config-brief.md`'s tie to ADR-0006/
+  ADR-0007 was read for background only, per the packet's own instruction —
+  not re-escalated (it explains the *origin* of the already-adjudicated
+  finding, doesn't change it). `docs-overhaul-brief.md`'s tie to the
+  existing "top-level docs never adopted the package model" PARKING-LOT item
+  (OP-003) was cross-checked and confirmed as the same finding — not
+  re-logged.
+- 1 parking-lot item (new, above). 1 section (`adhoqnotes.md`) is entirely
+  `(inferred, unconfirmed)` per the packet's explicit instruction; all other
+  4 sections cite direct statements.
+- **The OP-005 intent-distillation series (a/b/c/d) is now fully complete.**
+  `docs/INTENT.md` holds 30 sections total across Federation (10),
+  Knowledge Base Foundation (8), Advisory Pipeline MVP (7), and standalone
+  threads (5). Across all four sub-packets: 0 new ADRs, 1 new parking-lot
+  item (this entry), 1 section fully inferred/unconfirmed (flagged for
+  OP-006), and no plan-vs-built drift found anywhere in the a/b/c threads.
+- **Next:** OP-006 — interview packet (closed questions from OP-003..005,
+  including all escalated design ADRs) → Mikael. Read `packets/OP-006.md`
+  (create if it doesn't exist yet, per the packet DAG in
+  `OVERHAUL-SKETCH-v0.2.md` §6).
+- Open questions for Mikael: the accumulated set from OP-003..005 — this is
+  exactly what OP-006 exists to collect and front-load as closed questions,
+  not to resolve ad-hoc here.
+
+## 2026-07-07 — OP-005c Advisory Pipeline MVP intent distillation (done)
+
+- Appended 7 sections to `docs/INTENT.md` from the 4 Advisory Pipeline MVP
+  `thoughts/` files (~436 lines): code-over-docs-when-conflicting (3rd
+  independent confirmation of the pattern), `IChatClient` as a deliberate
+  second LLM abstraction alongside `ILlmService` (ties to ADR-0006/0007, not
+  re-litigated), honesty cap as a pipeline-enforced architectural invariant,
+  `knowledge_depth_score`-driven automatic model-tier routing, per-feature
+  audit tables (`advisory_interactions` distinct from `interaction_logs`
+  despite surface similarity), Software Product Advisor as DEKE's
+  self-advisory closing the loop with OP-005b's bootstrap intent, and a
+  manual live-e2e verification gate for cross-cutting features (complements,
+  doesn't contradict, OP-005b's pure-unit-tests-in-CI intention).
+- Cross-checked against `docs/PROJECT-MAP.md`'s Advisory Pipeline Contract,
+  Advisory Adapter Plugin, Advisory Pipeline Implementation, Advisory Tools
+  entries: **no plan-vs-built drift found** — third consecutive clean OP-005
+  packet. The session's 3 live-e2e runtime bugs (M.E.AI/Anthropic.SDK pin,
+  enum-as-int, advisory→federation trust coupling) were all found *and
+  fixed* within the same thread — not live issues, not re-flagged.
+- No new ADR escalated: the two smell-adjacent findings (ILlmService/
+  IChatClient duality; `GetDomainAdvice` PascalCase naming) already
+  substantiate ADR-0006/0007 and an existing PARKING-LOT style-nit
+  respectively — neither re-escalated.
+- 0 parking-lot items. 0 sections flagged `(inferred, unconfirmed)`.
+- **Next:** OP-005d — misc standalone threads (docs-overhaul,
+  product-checkpoint-fixes, llm-provider-config, adhoqnotes) intent
+  distillation, the last OP-005 sub-packet. Read `packets/OP-005d.md`.
+- Open questions for Mikael: none new.
+
+## 2026-07-07 — OP-005b Knowledge Base Foundation intent distillation (done)
+
+- Appended 8 sections to `docs/INTENT.md` from the 4 KB Foundation
+  `thoughts/` files (~407 lines): merge-time pure trust scoring, neutral
+  fallback for missing credibility (federated-result zeroing bug caught in
+  plan validation), no-double-counting-credibility principle, chunking via
+  library (SemanticChunker.NET, reinforces OP-005a's library-over-hand-rolled
+  theme), bootstrap self-ingestion as primary-source domain, interaction
+  logging as capture-only + top-level-only, hand-edited `init.sql` with no
+  migration tooling (cross-thread confirmed with federation-phase1), unit
+  tests over mocked repos accepted in lieu of a DB integration harness.
+- Cross-checked against `docs/PROJECT-MAP.md`'s Fact & Source Domain, Term &
+  Pattern Domain, Search & Trust Contracts, Data Access & Type Handlers,
+  Embeddings, Harvesters, Extraction, Repositories, Trust entries: **no
+  plan-vs-built drift found** — matches OP-005a's pattern of a clean packet.
+- No new ADR escalated: the only design-smell-adjacent finding
+  (`ITrustScoringService`'s 5-factor formula) already substantiates ADR-0005
+  (not re-escalated, same as OP-004a/OP-004b's prior notes).
+- 0 parking-lot items. 0 sections flagged `(inferred, unconfirmed)` — all 8
+  cite direct statements from the source files.
+- **Next:** OP-005c — Advisory Pipeline MVP intent distillation. Read
+  `packets/OP-005c.md`.
+- Open questions for Mikael: none new.
+
+## 2026-07-07 — OP-005a Federation intent distillation (done)
+
+- Created `docs/INTENT.md` (new file) with 10 sections distilled from the 7
+  Federation phase1+phase2 `thoughts/` files (~1334 lines): opt-in/additive
+  federation, static peer config now, library-over-hand-rolled patterns
+  (Polly/`IOptions<T>`), manifest-driven polling discovery, local-first
+  delegation threshold, protocol-level loop prevention, locality-weighted
+  scoring, MCP-and-REST-as-peers, breaking-changes-acceptable, auth-deferred.
+- Cross-checked against `docs/PROJECT-MAP.md`'s Federation, Federation
+  (Infrastructure), Search Endpoints, Federation Endpoints, Search Tools, and
+  Peer Health Check entries: **no plan-vs-built drift found** — Phase 1 and
+  Phase 2 shipped essentially as planned (unusually clean packet).
+- No new ADR escalated: nothing found was a fresh design smell. Two sections
+  cross-reference already-known items without re-escalating (ADR-0005
+  ranking-formula drift; ADR-0008 unrelated Api auth defect, explicitly
+  distinguished from federation's separately-deferred Phase 5 auth).
+- 0 parking-lot items (no drift to log). 1 section carries a partial
+  `(inferred, unconfirmed)` aside (whether "breaking changes OK" generalizes
+  DEKE-wide beyond federation) — flagged for OP-006, not presented as fact.
+- **Next:** OP-005b — Knowledge Base Foundation intent distillation. Read
+  `packets/OP-005b.md`.
+- Open questions for Mikael: none new (same open set as prior entry — none
+  block OP-005b).
+
 ## 2026-07-07 — OP-004f tests/Deke.Tests mapping sweep (done, OP-004 series complete)
 
 - Added 6 `docs/PROJECT-MAP.md` entries for `tests/Deke.Tests`, grouping its 9
