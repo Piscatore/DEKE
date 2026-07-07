@@ -45,6 +45,13 @@ This index provides a navigable overview of all DEKE project documentation.
 |----------|------|-------------|
 | [roadmap.md](roadmap.md) | Living | Phase summary across all packages |
 
+## Tooling & Decisions
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [TOOLING.md](TOOLING.md) | Living | MCP/plugin/CLI tool inventory for DEKE sessions, KEEP/DISCONNECT verdicts, verification suite |
+| [adr/](adr/) | Living | Architecture Decision Records (tooling, design, naming) |
+
 ## Documentation Map
 
 ```
@@ -66,12 +73,16 @@ DEKE/
     │   ├── federation.md               Federation protocol
     │   ├── retrieval-pipeline.md       Retrieval pipeline design
     │   └── decisions.md                ADRs, guardrails, open questions
-    └── science/                        Background research
-        ├── neuroevolution.md           Evolution strategies and frameworks
-        ├── reinforcement-learning.md   TD learning, Goodhart's Law, curiosity
-        ├── retrieval-theory.md         Retrieval science and techniques
-        ├── papers.md                   Paper bibliography
-        └── evolution-vision.md         Evolution Engine research vision
+    ├── science/                        Background research
+    │   ├── neuroevolution.md           Evolution strategies and frameworks
+    │   ├── reinforcement-learning.md   TD learning, Goodhart's Law, curiosity
+    │   ├── retrieval-theory.md         Retrieval science and techniques
+    │   ├── papers.md                   Paper bibliography
+    │   └── evolution-vision.md         Evolution Engine research vision
+    ├── TOOLING.md                      Tool inventory, KEEP/DISCONNECT verdicts
+    └── adr/                            Architecture Decision Records
+        └── ADR-0001-ollamasharp-roslyn-workspace-pin.md
+                                         OllamaSharp pin blocking Roslyn MCP loads
 ```
 
 ## Document Classifications
@@ -94,6 +105,7 @@ The `science/` branch contains curated research that ages gracefully. Updated wh
 
 - **Root documents**: UPPERCASE filenames (e.g., `README.md`, `CONTRIBUTING.md`)
 - **docs/ files**: lowercase-with-hyphens (e.g., `retrieval-pipeline.md`)
+- **DEKE Overhaul artifacts** (`TOOLING.md`, and later `GLOSSARY.md`, `PROJECT-MAP.md`, `INTENT.md`, `ROADMAP.md`) are uppercase by deliberate exception — see `/overhaul/OVERHAUL-SKETCH-v0.2.md` §2
 - **Tone**: Formal
 - **Headings**: Single H1 per file
 - **Code**: Inline backticks for short codes, fenced blocks with language tags

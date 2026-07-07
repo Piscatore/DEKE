@@ -1,4 +1,33 @@
 {
+  "deniedMcpServers": [
+    { "serverName": "docker-mcp" },
+    { "serverName": "sqlcl" },
+    { "serverName": "windows-desktop" },
+    { "serverName": "system-monitor" },
+    { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Matrixify" },
+    { "serverName": "claude.ai Mermaid Chart" },
+    { "serverName": "claude.ai Google Drive" }
+  ],
+  "skillOverrides": {
+    "graphify": "off",
+    "smithery-ai-cli": "off",
+    "qf-check": "off",
+    "qf-complete": "off",
+    "qf-decide": "off",
+    "qf-migrate-to-raid": "off",
+    "qf-new": "off",
+    "qf-resume": "off",
+    "qf-switch": "off",
+    "verbose-basic": "off",
+    "verbose-detailed": "off",
+    "verbose-debug": "off",
+    "verbose-off": "off",
+    "verbose-status": "off",
+    "dataviz": "off",
+    "artifact-design": "off",
+    "playwright-skill": "off"
+  },
   "hooks": {
     "PostToolUse": [
       {
