@@ -1,6 +1,6 @@
 # ADR-0003: Canonicalize Package 1's phase shorthand and resolve the Phase 4 gap
 
-- **Status:** proposed
+- **Status:** accepted
 - **Type:** naming
 - **Decision:** Adopt "P1-N" as the canonical shorthand for Package 1 phases
   (glossary row proposed in `docs/GLOSSARY.md`), matching the pattern already
@@ -33,3 +33,17 @@
   Package 1 Phase 4 is (or confirm it is intentionally reserved/absent). If
   accepted, spawns an OP-009 spec-refactor packet to normalize the shorthand
   across `specification.md` and `decisions.md`.
+- **Resolution (2026-07-07, Mikael, direct adjudication — ad-hoc, ahead of
+  OP-006/OP-007):** Renumber to close the gap. Package 1's current Phase 5
+  (multilingual model swap, documented in `retrieval-pipeline.md`) becomes
+  Phase 4, eliminating the gap entirely: Phase 1 = provenance schema, Phase 2
+  = quality pipeline, Phase 3 = terminology database, Phase 4 = multilingual
+  model swap — nothing above 4. This is a distinct resolution from either
+  rejected alternative above (it neither leaves the shorthand as-is nor
+  invents a new Phase 4 definition — it closes the gap by renumbering an
+  existing phase). The "P1-N" shorthand itself is confirmed canonical, as
+  originally proposed — that part of this ADR was an adoption, not a
+  contested question, and is covered by this same approval. Normalizing the
+  shorthand and the renumbering across `specification.md`,
+  `retrieval-pipeline.md`, and `decisions.md` is spec-refactor work, scoped to
+  packet OP-009a; it is not performed by this ADR.

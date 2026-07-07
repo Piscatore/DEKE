@@ -1,6 +1,6 @@
 # ADR-0004: LLM backend documentation doesn't match implementation
 
-- **Status:** proposed
+- **Status:** accepted
 - **Type:** design
 - **Decision:** Not decided here — this ADR records a real doc-vs-code drift
   for Mikael to adjudicate. No fix is chosen or implied by this packet.
@@ -35,3 +35,10 @@
 - **Consequences:** Feeds the OP-006 interview packet. Whichever option
   Mikael picks becomes an OP-008 design packet (if code changes) or is
   scoped directly into an OP-009 spec-refactor packet (if only docs change).
+- **Resolution (2026-07-07, Mikael, direct adjudication — ad-hoc, ahead of
+  OP-006/OP-007):** Implement the missing backends. The documented
+  Anthropic/Ollama `IChatClient` backends are the target architecture; the
+  code needs to catch up to the docs, not the other way around. This is real,
+  nontrivial feature work — new backend implementations in
+  `src/Deke.Infrastructure/Llm/` — not a doc fix, and is scoped to packet
+  OP-008b, which requires a code-capable agent/session.

@@ -61,6 +61,7 @@ Conventions below.
 | Document | Type | Description |
 |----------|------|-------------|
 | [GLOSSARY.md](GLOSSARY.md) | Living | Canonical ontology: naming terms, deprecated aliases, approval status |
+| [PROJECT-MAP.md](PROJECT-MAP.md) | Living | Component inventory built up region by region via mapping sweeps (OP-004a..n) |
 
 ## Documentation Map
 
@@ -73,6 +74,7 @@ DEKE/
 └── docs/
     ├── INDEX.md                        This file
     ├── GLOSSARY.md                     Canonical ontology (Overhaul artifact)
+    ├── PROJECT-MAP.md                  Component inventory (Overhaul artifact)
     ├── roadmap.md                      Implementation phases and milestones
     ├── product/                        "What" — system model and behavior
     │   ├── overview.md                 Vision and two-package architecture
@@ -116,7 +118,7 @@ The `science/` branch contains curated research that ages gracefully. Updated wh
 
 - **Root documents**: UPPERCASE filenames (e.g., `README.md`, `CONTRIBUTING.md`)
 - **docs/ files**: lowercase-with-hyphens (e.g., `retrieval-pipeline.md`)
-- **DEKE Overhaul artifacts** (`TOOLING.md`, and later `GLOSSARY.md`, `PROJECT-MAP.md`, `INTENT.md`, `ROADMAP.md`) are uppercase by deliberate exception — see `/overhaul/OVERHAUL-SKETCH-v0.2.md` §2
+- **DEKE Overhaul artifacts** (`TOOLING.md`, `GLOSSARY.md`, `PROJECT-MAP.md`, and later `INTENT.md`, `ROADMAP.md`) are uppercase by deliberate exception — see `/overhaul/OVERHAUL-SKETCH-v0.2.md` §2
 - **Tone**: Formal
 - **Headings**: Single H1 per file
 - **Code**: Inline backticks for short codes, fenced blocks with language tags

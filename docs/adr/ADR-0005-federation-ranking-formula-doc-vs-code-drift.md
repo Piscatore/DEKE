@@ -1,6 +1,6 @@
 # ADR-0005: Federation ranking formula — documentation doesn't match implementation
 
-- **Status:** proposed
+- **Status:** accepted
 - **Type:** design
 - **Decision:** Not decided here — this ADR records a real doc-vs-code drift
   for Mikael to adjudicate. No fix is chosen or implied by this packet.
@@ -33,3 +33,10 @@
 - **Consequences:** Feeds the OP-006 interview packet. Whichever option
   Mikael picks becomes an OP-009 spec-refactor packet (if only docs change)
   or an OP-008 design packet (if the scoring logic itself changes).
+- **Resolution (2026-07-07, Mikael, direct adjudication — ad-hoc, ahead of
+  OP-006/OP-007):** Update the doc to the real formula. `federation.md`'s
+  "Result Ranking" section is to be rewritten to document the actual
+  `similarity * confidence * credibility * recencyDecay * localityWeight`
+  formula from `TrustScoringService.Score()`, replacing the stale two-factor
+  `similarity * locality_weight` example. This is a pure doc fix, scoped to
+  packet OP-009b — the scoring logic itself is not changing.

@@ -1,6 +1,6 @@
 # ADR-0002: Canonicalize "Evolution Engine" and adjudicate its product status
 
-- **Status:** proposed
+- **Status:** accepted
 - **Type:** naming
 - **Decision:** Adopt "Evolution Engine" as the canonical term for this
   subsystem, deprecating "Package 3" and "P3" (glossary row proposed in
@@ -35,3 +35,13 @@
   `decisions.md`'s P3-* entries be re-labeled accordingly? If accepted, may
   spawn an OP-009 spec-refactor packet to reconcile `decisions.md`'s status
   framing with `evolution-vision.md`.
+- **Resolution (2026-07-07, Mikael, direct adjudication — ad-hoc, ahead of
+  OP-006/OP-007):** Active package. The Evolution Engine is promoted to full
+  parity with Package 1 and Package 2 — DEKE's product model becomes a
+  **Three-Package Architecture**, not the "Two-Package Architecture"
+  `docs/product/overview.md` currently describes. This directly contradicts
+  `docs/science/evolution-vision.md`'s current claim that it is "not part of
+  DEKE's active product model" and `decisions.md`'s 2026-04 entry deferring it
+  to research status — both are now stale and must be reconciled to this
+  decision. That reconciliation is spec-refactor work, scoped to packet
+  OP-008a; it is not performed by this ADR.
