@@ -23,7 +23,24 @@ public class AdvisoryInteractionRepository : IAdvisoryInteractionRepository
                 @CitedFactIds, @FactConfidences, @ConfidenceBand, @KnowledgeGaps,
                 @RawOutput, @ContainsConflicting, @CreatedAt)
             """,
-            interaction);
+            // Enum names are passed explicitly: Dapper converts enum parameters to their
+            // underlying int on write (custom type handlers only apply on read), which would
+            // store "1"/"0" instead of readable names in the text columns.
+            new
+            {
+                interaction.Id,
+                interaction.Domain,
+                interaction.Query,
+                Stakes = interaction.Stakes.ToString(),
+                interaction.Model,
+                interaction.CitedFactIds,
+                interaction.FactConfidences,
+                ConfidenceBand = interaction.ConfidenceBand.ToString(),
+                interaction.KnowledgeGaps,
+                interaction.RawOutput,
+                interaction.ContainsConflicting,
+                interaction.CreatedAt
+            });
         return interaction.Id;
     }
 }

@@ -12,6 +12,7 @@ using Deke.Infrastructure.Trust;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -131,6 +132,10 @@ public static class ServiceCollectionExtensions
         var config = new AdvisoryConfig();
         configuration.GetSection("Advisory").Bind(config);
         services.AddAdvisoryChatClients(config);
+
+        // Advisory depends on trust scoring; register it here too so the pipeline
+        // does not require AddDekeFederation to have run first.
+        services.TryAddSingleton<ITrustScoringService, TrustScoringService>();
 
         services.AddSingleton<ILlmSelectionPolicy, LlmSelectionPolicy>();
         services.AddScoped<IAdvisoryInteractionRepository, AdvisoryInteractionRepository>();
