@@ -47,7 +47,7 @@ Each stage is implemented as an independent, composable service with a defined i
 |-------|---------|--------|-------------|
 | Harvest | RssHarvester, WebPageHarvester | + PDF, Markdown, API harvesters | Fetch raw content from sources |
 | Extract | SimpleExtractionService | LLM-assisted extraction | Extract discrete claims from raw content |
-| Chunk | (none) | SemanticChunker.NET | Split content into semantically coherent segments |
+| Chunk | IChunker / SemanticChunkerAdapter | SemanticChunker.NET | Split content into semantically coherent segments |
 | Embed | OnnxEmbeddingService (384-dim) | Same, with model upgrade path | Generate embeddings |
 | Dedup | URL + content hash | 5-level pipeline (see below) | Prevent duplicate facts |
 | Store | Dapper INSERT + pgvector | Same | Persist to PostgreSQL |
@@ -91,7 +91,7 @@ Unified abstraction layer for embedding and chat completions across providers.
 
 - **Role in DEKE**: Provide a stable interface for embedding generation that can switch between ONNX, Ollama, and API-backed models without changing calling code.
 - **Integration point**: Wraps OnnxEmbeddingService and future embedding providers.
-- **Benefit**: Enables the multilingual model swap (Phase 5) without pipeline code changes.
+- **Benefit**: Enables the multilingual model swap (P1-4) without pipeline code changes.
 
 ### PdfPig
 
@@ -114,20 +114,20 @@ Markdown processing library for .NET.
 
 ### Phase R1: Semantic Chunking
 
-**Dependency**: None (can proceed immediately).
+**Status**: Done -- shipped in the current pipeline.
 
-Add SemanticChunker.NET to the ingestion pipeline. Replace the current approach where extraction produces a single fact per source with a chunking step that produces multiple semantically coherent facts.
+SemanticChunker.NET was added to the ingestion pipeline, replacing the prior approach where extraction produced a single fact per source with a chunking step that produces multiple semantically coherent facts.
 
-Deliverables:
+Delivered:
 
-- IChunkingService interface in Deke.Core
-- SemanticChunkingService implementation in Deke.Infrastructure
+- `IChunker` interface in Deke.Core
+- `SemanticChunkerAdapter` implementation in Deke.Infrastructure
 - Integration with existing harvester pipeline (chunk after extract, before embed)
 - Chunk size and overlap configuration per domain
 
 ### Phase R2: Five-Level Deduplication
 
-**Dependency**: Package 1 Phase 1 (independence_fingerprint on sources).
+**Dependency**: P1-1 (independence_fingerprint on sources).
 
 Implement the dedup pipeline described in [specification.md](specification.md):
 
@@ -141,7 +141,7 @@ Levels 1-3 run synchronously at ingest. Levels 4-5 run asynchronously as backgro
 
 ### Phase R3: Query Expansion
 
-**Dependency**: Package 1 Phase 3 (terminology database).
+**Dependency**: P1-3 (terminology database).
 
 Use the terminology database to expand queries before embedding:
 
@@ -187,7 +187,7 @@ pgvector supports both IVFFlat and HNSW indexes. HNSW provides better recall at 
 
 Wrap OnnxEmbeddingService behind the Microsoft.Extensions.AI embedding abstraction. This provides a clean swap point for:
 
-- Multilingual model replacement (Phase 5 of Package 1)
+- Multilingual model replacement (P1-4)
 - API-backed embedding for evaluation or fallback
 - Ollama-hosted embedding models
 
@@ -217,7 +217,7 @@ These metrics are tailored to DEKE's use case (grounded advisory responses) rath
 
 ### Evaluation Method
 
-1. **Golden dataset**: Curated set of (query, expected_relevant_facts) pairs per domain. Maintained alongside the domain question corpus (Package 3 Curiosity Service).
+1. **Golden dataset**: Curated set of (query, expected_relevant_facts) pairs per domain. Maintained alongside the domain question corpus (Evolution Engine Curiosity Service).
 2. **A/B pipeline comparison**: Run the same query set through old and new pipeline configurations. Compare metrics.
 3. **Regression detection**: Any pipeline change that reduces a metric below its target is rejected.
-4. **Integration with Package 3**: The evaluation framework feeds into Package 3's quality prediction model. Pipeline improvements that increase retrieval precision should produce corresponding improvements in advisory response quality.
+4. **Integration with the Evolution Engine**: The evaluation framework feeds into the Evolution Engine's quality prediction model. Pipeline improvements that increase retrieval precision should produce corresponding improvements in advisory response quality.

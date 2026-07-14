@@ -230,20 +230,45 @@ Each peer delegation has a configurable timeout (default: 10 seconds). If a peer
 
 ## Result Ranking
 
-When local and federated results are merged, they are scored using a weighted formula:
+When local and federated results are merged, they are scored using a five-factor weighted formula, computed by `TrustScoringService.Score()`:
 
 ```
-final_score = similarity * locality_weight
+final_score = similarity * confidence * credibility * recencyDecay * localityWeight
 ```
 
-Where `locality_weight` is configured per instance:
+| Factor | Meaning |
+|--------|---------|
+| `similarity` | Cosine similarity between the query embedding and the fact's embedding, as returned by vector search |
+| `confidence` | The fact's own confidence rating (`FactSearchResult.Confidence`), set when the fact was created or extracted |
+| `credibility` | The trust rating of the fact's source (`FactSearchResult.SourceCredibility`). Federated facts that arrive without local source-credibility data default to a neutral `0.5` rather than being zeroed out |
+| `recencyDecay` | Exponential decay based on the fact's age: `0.5 ^ (age_in_days / 180)` — the score halves every 180 days |
+| `localityWeight` | Configured per hop-distance from the originating instance |
 
-| Source | Default Weight | Rationale |
+Before scoring, a fact whose `validFrom`/`validUntil` window excludes the current time is scored `0` outright, regardless of the other four factors.
+
+`localityWeight` is configured per instance, keyed by hop count (`FederationConfig.LocalityWeights`):
+
+| Hops from originating instance | Default Weight | Rationale |
 |--------|---------------|-----------|
-| Local | 1.0 | Local facts are managed by this instance; full trust |
-| Peer | 0.8 | Peer facts are outside this instance's control; slight discount |
+| 0 (Local) | 1.0 | Local facts are managed by this instance; full trust |
+| 1 | 0.9 | One federation hop away; slight discount |
+| 2 | 0.75 | Two hops away; moderate discount |
+| 3 | 0.6 | Three hops away — the default `MaxHops` boundary; larger discount |
+| >3 (fallback) | 0.5 | Should not normally occur within `MaxHops`; conservative default if it does |
 
-This ensures that a local fact with similarity 0.80 outranks a federated fact with similarity 0.85 (0.80 * 1.0 = 0.80 vs 0.85 * 0.80 = 0.68). Locality weights are configurable to accommodate trust relationships between specific instances.
+### Worked Example
+
+Consider two results for the same query:
+
+- **Fact A (local):** similarity `0.78`, confidence `0.90`, credibility `0.85`, created 30 days ago, 0 hops (`localityWeight = 1.0`)
+  `recencyDecay = 0.5 ^ (30 / 180) ≈ 0.891`
+  `final_score = 0.78 * 0.90 * 0.85 * 0.891 * 1.0 ≈ 0.532`
+
+- **Fact B (federated, 2 hops):** similarity `0.85` (higher than Fact A), confidence `0.70`, credibility `0.60`, created 400 days ago, 2 hops (`localityWeight = 0.75`)
+  `recencyDecay = 0.5 ^ (400 / 180) ≈ 0.214`
+  `final_score = 0.85 * 0.70 * 0.60 * 0.214 * 0.75 ≈ 0.057`
+
+Even though Fact B has the higher raw similarity, Fact A ranks far higher overall (`0.532` vs `0.057`) once its higher confidence, higher source credibility, greater recency, and full locality weight are factored in. This is the intended behavior: raw similarity alone is not a reliable ranking signal across a federation, where facts vary in freshness, source trustworthiness, and distance from the querying instance.
 
 Results are sorted by `final_score` descending, with ties broken by local-first ordering.
 
@@ -373,5 +398,5 @@ Response includes:
 
 - Cross-instance trust metadata propagation
 - Peer credibility scoring based on result quality over time
-- Federation-aware Package 3 delta propagation
+- Federation-aware Evolution Engine delta propagation
 - Not yet designed

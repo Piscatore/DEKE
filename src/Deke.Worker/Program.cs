@@ -1,4 +1,5 @@
 ﻿using Deke.Infrastructure;
+using Deke.Infrastructure.Advisory;
 using Deke.Worker.Services;
 using Serilog;
 
@@ -15,8 +16,16 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
 builder.Services.AddDekeHarvesters();
-builder.Services.AddDekeLlm(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
+
+// PatternDiscoveryService summarizes fact clusters via the same keyed IChatClient
+// backends the Advisory pipeline uses (ollama key -- local/cheap, matches its
+// hourly-batch cost/latency profile per ADR-0007).
+var advisoryConfig = new AdvisoryConfig();
+builder.Configuration.GetSection("Advisory").Bind(advisoryConfig);
+builder.Services.AddSingleton(advisoryConfig);
+builder.Services.AddAdvisoryChatClients(advisoryConfig);
+
 builder.Services.AddScoped<BootstrapIngestionService>();
 
 if (args.Contains("--bootstrap"))

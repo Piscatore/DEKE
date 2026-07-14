@@ -23,11 +23,6 @@ public class ApiKeyAuthHandler : AuthenticationHandler<AuthenticationSchemeOptio
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var configuredKey = _configuration["ApiKey"];
-        if (string.IsNullOrEmpty(configuredKey))
-        {
-            // No API key configured — allow all requests (development mode)
-            return Task.FromResult(AuthenticateResult.NoResult());
-        }
 
         if (!Request.Headers.TryGetValue(ApiKeyHeaderName, out var headerValue))
         {

@@ -22,6 +22,12 @@ dotnet build
 # Download embedding model (one-time)
 ./scripts/download-model.sh
 
+# Deke.Api fails fast at startup if configuration key "ApiKey" is unset.
+# Set it in a gitignored local override before running the API, e.g.
+# src/Deke.Api/appsettings.Development.local.json:
+#   { "ApiKey": "test-key-123" }
+# (or via the ApiKey environment variable)
+
 # Run API
 dotnet run --project src/Deke.Api
 
@@ -126,6 +132,7 @@ Environment variables override appsettings.json:
 | `ConnectionStrings__Deke` | localhost | PostgreSQL connection |
 | `Embeddings__ModelPath` | models/all-MiniLM-L6-v2/model.onnx | ONNX model |
 | `Embeddings__VocabPath` | models/all-MiniLM-L6-v2/vocab.txt | Vocabulary |
+| `ApiKey` | *(none — required)* | Required for `Deke.Api` to start; clients send it via the `X-Api-Key` header on protected endpoints |
 
 ## Testing
 
@@ -143,13 +150,17 @@ dotnet test --collect:"XPlat Code Coverage"
 Just start adding facts with the domain name - no pre-configuration needed.
 
 ### Add a source to monitor
+`POST /api/sources` requires authorization — send the configured key via `X-Api-Key`:
 ```bash
 curl -X POST http://localhost:5000/api/sources \
   -H "Content-Type: application/json" \
+  -H "X-Api-Key: test-key-123" \
   -d '{"url":"https://example.com/feed.rss","domain":"fishing","type":"Rss"}'
 ```
 
 ### Search facts
+`GET /api/search` is anonymous — no `X-Api-Key` header needed (the API must
+still have an `ApiKey` configured to start at all, see Quick Start):
 ```bash
 curl "http://localhost:5000/api/search?query=ice%20fishing&domain=fishing"
 ```

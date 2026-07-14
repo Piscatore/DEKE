@@ -24,6 +24,9 @@ jobs:
       - name: Check formatting
         run: dotnet format --verify-no-changes --verbosity diagnostic
 
+      - name: Glossary lint
+        run: bash scripts/glossary-lint.sh
+
       - name: Build
         run: dotnet build --no-restore
 

@@ -1,5 +1,7 @@
 ﻿using Deke.Core.Interfaces;
 using Deke.Core.Models;
+using Deke.Infrastructure.Advisory;
+using Microsoft.Extensions.AI;
 
 namespace Deke.Worker.Services;
 
@@ -44,7 +46,8 @@ public class PatternDiscoveryService : BackgroundService
         var factRepo = scope.ServiceProvider.GetRequiredService<IFactRepository>();
         var patternRepo = scope.ServiceProvider.GetRequiredService<IPatternRepository>();
         var embeddingService = scope.ServiceProvider.GetRequiredService<IEmbeddingService>();
-        var llmService = scope.ServiceProvider.GetRequiredService<ILlmService>();
+        var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(AdvisoryClientKeys.Ollama);
+        var advisoryConfig = scope.ServiceProvider.GetRequiredService<AdvisoryConfig>();
         var learningLogRepo = scope.ServiceProvider.GetRequiredService<ILearningLogRepository>();
         var sourceRepo = scope.ServiceProvider.GetRequiredService<ISourceRepository>();
 
@@ -93,15 +96,22 @@ public class PatternDiscoveryService : BackgroundService
                     var truncated = firstContent.Length > 100 ? firstContent[..100] + "..." : firstContent;
                     var description = $"Cluster of {cluster.Count} related facts about: {truncated}";
 
-                    if (llmService.IsAvailable)
+                    try
                     {
                         var prompt = $"Summarize the following related facts into a single pattern description:\n\n" +
                             string.Join("\n", cluster.Select(f => $"- {f.Content}"));
-                        var generated = await llmService.GenerateAsync(prompt, ct);
-                        if (!string.IsNullOrWhiteSpace(generated))
+                        var chatOptions = new ChatOptions { ModelId = advisoryConfig.OllamaModel };
+                        var response = await chatClient.GetResponseAsync(prompt, chatOptions, ct);
+                        if (!string.IsNullOrWhiteSpace(response.Text))
                         {
-                            description = generated;
+                            description = response.Text;
                         }
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        _logger.LogWarning(ex,
+                            "Pattern-discovery summarization unavailable for domain {Domain}; using templated description",
+                            domain);
                     }
 
                     var avgSimilarity = ComputeAverageClusterSimilarity(cluster, embeddingService);

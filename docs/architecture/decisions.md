@@ -2,7 +2,7 @@
 
 Consolidated record of architecture decisions, guardrails, risk analysis, and open design questions for the DEKE project.
 
-For the technical specification these decisions shaped, see [specification.md](specification.md). For theoretical foundations behind Package 3 choices, see [science/evolution-theory.md](../science/evolution-theory.md).
+For the technical specification these decisions shaped, see [specification.md](specification.md). For theoretical foundations behind the Evolution Engine's choices, see [science/evolution-vision.md](../science/evolution-vision.md). The Evolution Engine is an active package under the Three-Package Architecture --- see [ADR-0002](../adr/ADR-0002-evolution-engine-package-3-naming-status.md) and the annotation on the 2026-04 Product Checkpoint entries below for the status history.
 
 ---
 
@@ -24,7 +24,7 @@ Decisions captured during design sessions, recorded with date, decision, and rat
 | 2026-03 | Three independent signal tracks for Package 3 (explicit + behavioral + veracity) | Core defense against Goodhart's Law. No single track can be maximized at the expense of true quality without the others detecting divergence. Triangulation is enforced architecturally, not as a guideline. |
 | 2026-03 | Hindsight feedback (48-hour delayed probe) prioritized over immediate feedback | Hindsight feedback is systematically more accurate than foresight feedback. A user who has tried to apply advice knows whether it was actually useful, not just whether it sounded useful. |
 | 2026-03 | AdvisoryRequest/AdvisoryResponse as the permanent public contract | All consumers (MCP tools, REST clients, future A2A agents) rely on this contract indefinitely. Breaking changes are prohibited. New fields are additive. |
-| 2026-03 | Package 1 Phase 1 (provenance schema) is the critical path for all subsequent work | Schema changes before data are free; schema changes after data are expensive. Must be completed before significant data accumulates or bootstrap ingestion runs. |
+| 2026-03 | P1-1 (provenance schema) is the critical path for all subsequent work | Schema changes before data are free; schema changes after data are expensive. Must be completed before significant data accumulates or bootstrap ingestion runs. |
 | 2026-03 | Zero-cost priority: default to local inference everywhere | ONNX embeddings (local), pgvector (no hosted vector DB), Ollama (local LLM when knowledge depth permits). Anthropic API calls are the only variable cost and should decrease as knowledge depth increases. |
 
 ### 2026-03-13 Research Session
@@ -57,6 +57,14 @@ Decisions captured during design sessions, recorded with date, decision, and rat
 | 2026-04 | Simplify trust framework to source credibility + fact confidence + temporal validity | The full provenance cathedral (5-level dedup, corroboration, contradiction detection, domain trust policies, trust state lifecycle) delivers 80% of value at 20% of complexity. Corroboration and contradiction detection move to planned enhancements. |
 | 2026-04 | Reframe knowledge compensation as hypothesis to validate, not architectural invariant | The principle is directionally sound (better context improves smaller model output) but unproven. Model costs are declining faster than knowledge bases grow. Requires empirical validation: does DEKE + Haiku outperform Haiku alone on a standard question set? |
 | 2026-04 | Move to two-package product model (Knowledge Base + Knowledge Leverage) | Focus on delivering value (grounded advisory responses) before learning from it (evolution). Package 3 becomes viable only after multiple domains, sufficient query volume, and a measurable quality problem that manual curation cannot solve. |
+
+> **2026-07-07 reversal ([ADR-0002](../adr/ADR-0002-evolution-engine-package-3-naming-status.md), accepted):** the "Defer Package 3 (Evolution Engine) to research status" and "Move to two-package product model" entries above are superseded. Mikael's direct adjudication on 2026-07-07 promoted the Evolution Engine to full parity with Package 1 and Package 2 --- DEKE's product model is now the **Three-Package Architecture** (see [product/overview.md](../product/overview.md), [science/evolution-vision.md](../science/evolution-vision.md)). Both entries are left in place as the historical record of the 2026-04 decision and are not deleted or rewritten; the reversal is recorded here and in ADR-0002 instead.
+>
+> This reversal governs how every other Evolution Engine / `EE-N` reference in this document should be read --- in the 2026-03 design and research sessions above, and in the guardrails, GEPA mapping, and open design questions below --- as active design targets within the current architecture, not research parked outside the product model.
+>
+> The "Simplify advisory pipeline from 13 stages to 7" entry above justified removing the niche classification, quality prediction, escalation check, and signal emission stages as premature *because* the Evolution Engine was deferred. That precondition no longer holds. Whether those stages should return --- in full, in part, or not at all (the existing `advisory_interactions` audit table, added 2026-07-03, may already supply what the Evolution Engine needs) --- was posed as [ADR-0011](../adr/ADR-0011-advisory-pipeline-stages-vs-active-package-3.md) rather than decided here, and has since been resolved (see below).
+>
+> **2026-07-14 resolution ([ADR-0011](../adr/ADR-0011-advisory-pipeline-stages-vs-active-package-3.md), accepted):** Mikael's direct adjudication on 2026-07-14 keeps the 7-stage pipeline as-is. The existing `advisory_interactions` audit table (added 2026-07-03) plus out-of-pipeline batch processing is treated as sufficient for the Evolution Engine's current needs. No packet is spawned by this resolution. Revisit trigger: when EE-1 (trajectory logging) is actually sized and its concrete instrumentation needs are known --- if EE-1's needs exceed what `advisory_interactions` captures, reopen this question with a scoped code packet at that time.
 
 ### 2026-07-03 Advisory Pipeline MVP Implementation
 
@@ -96,7 +104,7 @@ DEKE gives advisory responses grounded in a knowledge base with confidence bandi
 | Stakes misclassification | If consumer passes incorrect stakes hint and no override mechanism exists, wrong model is used and curator escalation may not trigger. |
 | Adapter evolution introduces overconfidence | An evolved adapter variant that scores higher on quality metrics may simultaneously be more prone to overconfident responses on borderline-knowledge queries. |
 | Response accountability gap | Without a full audit trail, bad advisory responses cannot be traced to the specific adapter variant, retrieved facts, or evolution history that produced them. |
-| Trajectory data governance | P3-1 interaction logs will contain sensitive query intent signals. No retention, access, or usage policy currently specified. |
+| Trajectory data governance | EE-1 interaction logs will contain sensitive query intent signals. No retention, access, or usage policy currently specified. |
 
 ### Existing Mitigations
 
@@ -114,21 +122,21 @@ These risks are addressed in the current design:
 
 #### G1: Adapter Evolution Safety Gate
 
-**Target**: Package 3, Phase P3-5.
+**Target**: Evolution Engine, Phase EE-5.
 
 Before promoting a MAP-Elites variant from shadow to live, assert that the honesty constraint score has not degraded. Define honesty constraint score as the ratio of Insufficient or Low confidence responses on borderline-knowledge queries. A variant that increases confident-but-wrong responses is disqualified even if overall quality score is higher. This gate is separate from and runs before the MAP-Elites fitness comparison.
 
 #### G2: Response Audit Record
 
-**Target**: Package 3, Phase P3-1 (alongside trajectory logging).
+**Target**: Evolution Engine, Phase EE-1 (alongside trajectory logging).
 
 Every advisory response persisted with: adapter variant ID, fact IDs and their confidence scores at time of retrieval, LLM model used, stakes classification, raw LLM output before post-processing. The audit record is append-only and must not be modified by adapter evolution processes. Retention policy: minimum 90 days; longer for curator-reviewed responses.
 
 #### G3: Trajectory Data Governance Policy
 
-**Target**: Package 3, Phase P3-1 (new subsection).
+**Target**: Evolution Engine, Phase EE-1 (new subsection).
 
-Specify for P3-1 trajectory log: what is retained (query intent, retrieved fact content, context window, reasoning trace), for how long, at what granularity. Distinguish data eligible for adapter evolution (interactions with outcome signals) from data that should be discarded (queries with no signal or containing sensitive intent). User query content should not be stored in raw form beyond the interaction window -- distill to signals before persistence. Access policy: trajectory data used only for adapter evolution, never for knowledge base population.
+Specify for EE-1 trajectory log: what is retained (query intent, retrieved fact content, context window, reasoning trace), for how long, at what granularity. Distinguish data eligible for adapter evolution (interactions with outcome signals) from data that should be discarded (queries with no signal or containing sensitive intent). User query content should not be stored in raw form beyond the interaction window -- distill to signals before persistence. Access policy: trajectory data used only for adapter evolution, never for knowledge base population.
 
 #### G4: Stakes Floor
 
@@ -162,27 +170,27 @@ This mapping documents how the GEPA framework (arXiv:2507.19457) translates to D
 
 | Action | Target |
 |--------|--------|
-| Extend P3-1 interaction log to capture full trajectory (retrieved fact content, full context window, LLM reasoning trace, intermediate retrieval scores) | Package 3 P3-1 specification |
-| Add Response Audit Record to P3-1 persistence design (adapter variant ID, fact confidence scores at retrieval time, model used, stakes, raw output) | Package 3 P3-1 specification |
-| Add Trajectory Data Governance subsection to P3-1 (retention, access policy, distillation rules) | Package 3 P3-1 specification |
+| Extend EE-1 interaction log to capture full trajectory (retrieved fact content, full context window, LLM reasoning trace, intermediate retrieval scores) | Evolution Engine EE-1 specification |
+| Add Response Audit Record to EE-1 persistence design (adapter variant ID, fact confidence scores at retrieval time, model used, stakes, raw output) | Evolution Engine EE-1 specification |
+| Add Trajectory Data Governance subsection to EE-1 (retention, access policy, distillation rules) | Evolution Engine EE-1 specification |
 
 #### Design Amendments (incorporate at next document edit)
 
 | Action | Target |
 |--------|--------|
-| Replace parameter perturbation with GEPA-derived reflective mutation mechanism in P3-5 | Package 3 P3-5 |
-| Add honesty constraint safety gate to P3-5 promotion criteria (G1) | Package 3 P3-5 |
+| Replace parameter perturbation with GEPA-derived reflective mutation mechanism in EE-5 | Evolution Engine EE-5 |
+| Add honesty constraint safety gate to EE-5 promotion criteria (G1) | Evolution Engine EE-5 |
 | Add ContainsConflictingEvidence field to AdvisoryResponse (G5) | Package 2 P2-2 |
 | Add Three Laws framing (Endure > Excel > Evolve as MASE paradigm) | Master documentation |
 | Add honesty constraint framing as epistemic integrity / self-preservation | Master documentation |
-| Add ES paper citation as validation of MAP-Elites population approach | Package 3 P3-5 rationale |
-| Cite survey as validation of three-signal feedback design and niche competition credit assignment | Package 3 P3-5 |
+| Add ES paper citation as validation of MAP-Elites population approach | Evolution Engine EE-5 rationale |
+| Cite survey as validation of three-signal feedback design and niche competition credit assignment | Evolution Engine EE-5 |
 
 #### Open Items (add to backlog)
 
 | Item | Notes |
 |------|-------|
-| ES-style update rules as alternative to delta-propagation for adapter evolution | Investigate at P3-5 design time |
+| ES-style update rules as alternative to delta-propagation for adapter evolution | Investigate at EE-5 design time |
 | Expand OI-07: version-aware contradiction resolution without ground truth is an unsolved research problem | Needs deeper design before P1-3 |
 | Elevate OI-09: Curator Workflow is an accountability mechanism, not just a quality gate | EvoAgentX confirms HITL is necessary in production |
 | Stakes Floor: domain-signal-triggered escalation floor at High | Deferred until P2-1 |
@@ -200,7 +208,7 @@ These are gaps within already-specified packages requiring design work before im
 
 #### OI-01: Curiosity Blockade
 
-**Category**: Package 3, Curiosity Service. **Priority**: Medium.
+**Category**: Evolution Engine, Curiosity Service. **Priority**: Medium.
 
 The Curiosity Service drives self-directed knowledge acquisition by self-querying DEKE and measuring answerability. This works once the domain has enough knowledge to generate meaningful self-test questions. At absolute cold start, or when DEKE encounters a topic so unknown it cannot form useful questions, the curiosity loop can stall: DEKE asks itself a question, retrieves nothing, scores answerability as zero, flags it as high-priority -- but harvesting returns only tangentially related low-confidence facts, and the curiosity score barely moves. This is directly analogous to the curiosity blockade observed in game-playing RL agents (Pathak et al.).
 
@@ -212,9 +220,9 @@ Candidate approaches: seeding with expert-authored starter questions, broader we
 
 #### OI-02: Domain Question Corpus Seeding
 
-**Category**: Package 3, Curiosity Service. **Priority**: Medium.
+**Category**: Evolution Engine, Curiosity Service. **Priority**: Medium.
 
-The Curiosity Service requires a domain question corpus to run its self-query loop. The Package 3 design notes this corpus can be seeded manually and extended automatically. What is missing is a concrete seeding strategy: who authors initial questions, how many are needed, can an LLM generate them from a domain description, and should the corpus be versioned alongside the knowledge base.
+The Curiosity Service requires a domain question corpus to run its self-query loop. The Evolution Engine design notes this corpus can be seeded manually and extended automatically. What is missing is a concrete seeding strategy: who authors initial questions, how many are needed, can an LLM generate them from a domain description, and should the corpus be versioned alongside the knowledge base.
 
 For the Software Product Advisor, the bootstrap design sessions provide a natural source. For future domains this is not guaranteed.
 
@@ -224,7 +232,7 @@ For the Software Product Advisor, the bootstrap design sessions provide a natura
 
 #### OI-03: Cross-Domain Adapter Transfer
 
-**Category**: Package 3, Adapter Evolution. **Priority**: Low (now) / Medium (later).
+**Category**: Evolution Engine, Adapter Evolution. **Priority**: Low (now) / Medium (later).
 
 Related domains likely share adapter patterns. A good fact-weighting strategy for software architecture may transfer to a DevOps domain. Cross-domain transfer would allow a new domain to start with battle-tested adapter variants rather than evolving from the default adapter from scratch. The MAP-Elites structure supports this mechanically -- variants can be copied across archives. What is not designed is the transfer policy: which domains are "related" enough, how transferred variants are marked, and how their fitness is initialized.
 
@@ -244,21 +252,21 @@ AdvisoryRequest includes SessionId and PriorExchanges for multi-turn continuity.
 
 ### Group B: Research Threads
 
-These surfaced during the Package 3 research phase but were not developed into concrete design.
+These surfaced during the Evolution Engine research phase but were not developed into concrete design.
 
 #### OI-05: Debate-and-Critique Feedback
 
-**Category**: Package 3, Veracity Signal. **Priority**: Low (research interest).
+**Category**: Evolution Engine, Veracity Signal. **Priority**: Low (research interest).
 
 When a contested fact is identified (contradictions detected, low corroboration), DEKE could instantiate a mini-debate: one model instance argues for the fact, another against. An evaluator judges the debate. The outcome updates the fact's corroboration and contested status. This is more expensive than passive feedback (multiple LLM calls per debate) but applicable to exactly the cases where passive feedback is weakest -- highly contested facts where user signals are noisy and biased.
 
 **Why deferred**: The veracity signal track is not yet implemented. Debate-and-critique enhances a mechanism that does not yet exist.
 
-**Revisit when**: P3-4 (Hindsight Loop) is running and identifies persistently contested facts that passive signals cannot resolve.
+**Revisit when**: EE-4 (Hindsight Loop) is running and identifies persistently contested facts that passive signals cannot resolve.
 
 #### OI-06: Social Proof as Corroboration Signal
 
-**Category**: Package 3, Feedback Framework. **Priority**: Low.
+**Category**: Evolution Engine, Feedback Framework. **Priority**: Low.
 
 When multiple independent users receive the same advisory response and provide consistent feedback, that consistency is itself a form of corroboration of the response as a whole. If 10 independent users ask similar questions and 8 provide positive signals, that convergence is stronger than any single user's feedback. This requires identifying "substantially similar" queries, grouping interactions, and computing consensus signals.
 
@@ -276,9 +284,9 @@ A .NET 6 recommendation is not contradicted by a .NET 9 recommendation -- they a
 
 The Self-Evolving AI Agents Survey (arXiv:2508.07407) confirms that version-aware contradiction resolution without ground truth is an active unsolved research problem, not merely a deferred detail.
 
-**Why deferred**: Requires version tagging schema (Package 1 Phase 1). Detection logic can be added in Phase 2.
+**Why deferred**: Requires version tagging schema (P1-1). Detection logic can be added in P1-2.
 
-**Revisit when**: The Software Product Advisor returns false-positive contradiction warnings on version-progressive patterns, or P1-Phase 2 is being implemented.
+**Revisit when**: The Software Product Advisor returns false-positive contradiction warnings on version-progressive patterns, or P1-2 is being implemented.
 
 ### Group C: Structural Features
 
@@ -294,13 +302,13 @@ Design needed: retired_at timestamp, retired_reason field, query-time filter exc
 
 **Why deferred**: No facts have yet been retired.
 
-**Revisit when**: The first domain's facts begin approaching their valid_until dates, or P1-Phase 2 (temporal validity) is being implemented.
+**Revisit when**: The first domain's facts begin approaching their valid_until dates, or P1-2 (temporal validity) is being implemented.
 
 #### OI-09: Curator Workflow
 
-**Category**: Package 2 + Package 3, Human-in-the-Loop. **Priority**: Medium.
+**Category**: Package 2 + Evolution Engine, Human-in-the-Loop. **Priority**: Medium.
 
-ShouldEscalate() flags responses for human review, but there is no queue, UI, notification, or workflow for a curator to review, approve/modify, and release escalated responses. For the Software Product Advisor at Medium stakes with a single user, this is not critical. For high-stakes domains, a genuine curator workflow is required: review queue, curator interface, approval/modification/rejection actions, curator decisions fed back to Package 3 as high-weight explicit feedback, and response delivery only after curator approval.
+ShouldEscalate() flags responses for human review, but there is no queue, UI, notification, or workflow for a curator to review, approve/modify, and release escalated responses. For the Software Product Advisor at Medium stakes with a single user, this is not critical. For high-stakes domains, a genuine curator workflow is required: review queue, curator interface, approval/modification/rejection actions, curator decisions fed back to the Evolution Engine as high-weight explicit feedback, and response delivery only after curator approval.
 
 The curator workflow is an accountability mechanism, not merely a quality gate. EvoAgentX confirms HITL checkpoints are necessary in production. The responsibility chain must be explicitly assigned: adapter variant, curator, domain owner. This prevents the "moral crumple zone" described by Bozkurt (2025).
 
@@ -328,9 +336,9 @@ Precise trigger conditions:
 
 | Milestone | Items to Review |
 |-----------|-----------------|
-| After Package 1 Phase 2 (Quality Pipeline) | OI-07 (Version-Aware Contradiction), OI-08 (Fact Retirement) |
+| After P1-2 (Quality Pipeline) | OI-07 (Version-Aware Contradiction), OI-08 (Fact Retirement) |
 | After Package 2 Phase 3 (Software Product Advisor activated) | OI-04 (Multi-Turn), OI-02 (Corpus Seeding) |
-| After Package 3 Phase P3-2 (Prediction Model running) | OI-01 (Curiosity Blockade), OI-03 (Cross-Domain Transfer) |
+| After Evolution Engine Phase EE-2 (Prediction Model running) | OI-01 (Curiosity Blockade), OI-03 (Cross-Domain Transfer) |
 | After 50+ user interactions on a single domain | OI-06 (Social Proof), OI-05 (Debate-and-Critique) |
 | Before any high-stakes domain activation | OI-09 (Curator Workflow) -- mandatory |
 | When second external consumer requests integration | OI-10 (A2A Trigger Conditions) |

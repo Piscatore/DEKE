@@ -102,15 +102,21 @@ public class SearchTools
     [McpServerTool(Name = "list_available_domains"), Description("List all available knowledge domains across this instance and federated peers")]
     public static async Task<string> ListAvailableDomains(
         ISourceRepository sourceRepository,
+        IFactRepository factRepository,
         IFederationPeerRepository peerRepository,
         CancellationToken ct = default)
     {
         var sb = new StringBuilder();
 
-        // Local domains
+        // Local domains — union of source-registered domains and fact-only domains
+        // (facts can exist under a domain with no Source ever registered, per the
+        // documented zero-config add_fact workflow)
         var sources = await sourceRepository.GetAllAsync(ct);
+        var domainStats = await factRepository.GetDomainStatsAsync(ct);
+
         var localDomains = sources
             .Select(s => s.Domain)
+            .Concat(domainStats.Select(d => d.Domain))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(d => d)
             .ToList();
@@ -125,7 +131,20 @@ public class SearchTools
             foreach (var domain in localDomains)
             {
                 var sourceCount = sources.Count(s => string.Equals(s.Domain, domain, StringComparison.OrdinalIgnoreCase));
-                sb.AppendLine($"- **{domain}** ({sourceCount} source(s))");
+                var facts = domainStats.FirstOrDefault(d => string.Equals(d.Domain, domain, StringComparison.OrdinalIgnoreCase));
+
+                if (sourceCount > 0 && facts is not null)
+                {
+                    sb.AppendLine($"- **{domain}** ({sourceCount} source(s), {facts.FactCount} fact(s))");
+                }
+                else if (sourceCount > 0)
+                {
+                    sb.AppendLine($"- **{domain}** ({sourceCount} source(s))");
+                }
+                else
+                {
+                    sb.AppendLine($"- **{domain}** ({facts!.FactCount} fact(s), no registered source)");
+                }
             }
         }
 

@@ -25,6 +25,7 @@ Format:
 - Raised during: OP-003
 - What: retrieval-pipeline.md's Phase R1 deliverables list "IChunkingService"/"SemanticChunkingService" as if not yet built, and its pipeline table marks the Chunk stage "Current: (none)." The code already implements this — as `IChunker`/`SemanticChunkerAdapter`, wired in `ServiceCollectionExtensions.cs:66` and used by two Worker services.
 - Why deferred: plain doc-accuracy bug, not a naming conflict (the naming half is covered by the GLOSSARY.md row this packet added) or a design smell. Flagged for a future OP-009 spec-refactor packet to correct retrieval-pipeline.md's Phase R1 status.
+- **Resolved 2026-07-14 by OP-010**: Phase R1 Deliverables list corrected to `IChunker`/`SemanticChunkerAdapter` with "Done" status framing; Ingestion Stages table's Chunk row "Current" cell fixed from "(none)" to the real implemented names.
 
 ## 2026-07-07 — Top-level docs (README/CLAUDE.md) never adopted the package model
 - Raised during: OP-003
@@ -60,6 +61,7 @@ Format:
 - Raised during: OP-004d
 - What: `Program.cs` calls `builder.Services.AddDekeLlm(builder.Configuration)`, but no code under `src/Deke.Mcp` references `ILlmService` — its only solution-wide consumer is `Deke.Worker/Services/PatternDiscoveryService.cs` (per ADR-0006/ADR-0007). `Deke.Api`'s Host Composition entry (`docs/PROJECT-MAP.md`) shows the identical unused-registration pattern, so this isn't new to `Deke.Mcp`.
 - Why deferred: dead DI registration, not a behavior bug — no design disagreement, doesn't warrant its own ADR. ADR-0007 (accepted: retire `Llm/`, spawns OP-008c) already covers this system's fate; flagged here so OP-008c's implementer also removes this call site (and `Deke.Api`'s) when retiring `Llm/`, not just `PatternDiscoveryService.cs`'s.
+- **Resolved 2026-07-14 by OP-008c**: `AddDekeLlm` and the whole `Llm/` system deleted; call sites removed from `Deke.Api`, `Deke.Mcp`, and `Deke.Worker`.
 
 ## 2026-07-07 — Bootstrap ingestion is built but docs still say "Planned"/"not yet built"
 - Raised during: OP-004e
@@ -115,8 +117,14 @@ Format:
 - Raised during: OP-005d
 - What: `docs/product/overview.md:31` heads its architecture section "## The Two-Package Architecture" and its package table (`:35`) lists only two packages — a leftover from the `product-checkpoint-fixes` work item, which deliberately demoted Package 3 (Evolution Engine) out of the product model into a research/vision document. ADR-0002 (accepted, OP-003) later reversed that: `docs/GLOSSARY.md`'s Evolution Engine row states it is "Promoted to full parity with Package 1 and Package 2 under DEKE's Three-Package Architecture — an active package, not deferred research." `overview.md` was never updated to reflect the reversal.
 - Why deferred: decision-ahead-of-doc gap (ADR-0002 already adjudicated the substance; only the doc text is stale), not a fresh design disagreement — doesn't warrant a new ADR. Flagged for a future OP-009 spec-refactor packet: rewrite `overview.md`'s architecture section for three packages, consistent with the already-approved glossary entry.
+- **Resolved 2026-07-14 by OP-008a**: `overview.md`, `evolution-vision.md`, and `decisions.md` reconciled to the Three-Package Architecture. See ADR-0011 (proposed) for a design question this reconciliation surfaced.
 
 ## 2026-07-07 — GetDomainAdvice is the sole PascalCase MCP tool name
 - Raised during: OP-004d
 - What: `AdvisoryTools.cs`'s MCP tool is named `GetDomainAdvice` (PascalCase, via `[McpServerTool(Name = "GetDomainAdvice")]`). Every other MCP tool across `Tools/FactTools.cs` and `Tools/SearchTools.cs` uses snake_case (`add_fact`, `get_fact`, `get_domain_stats`, `consult_domain_expert`, `get_context`, `list_available_domains`). `specification.md` documents it as `GetDomainAdvice` too, so this isn't a doc/code mismatch — just an internal naming-convention inconsistency.
 - Why deferred: cosmetic, not a naming conflict for `docs/GLOSSARY.md` (no canonical-term collision) or a design smell (tool works correctly). Flagged for a later cleanup pass — rename to `get_domain_advice` for consistency, would require updating `specification.md` too.
+
+## 2026-07-14 — CLAUDE.md's "Search facts" example uses GET, real endpoint is POST
+- Raised during: OP-008d
+- What: top-level `CLAUDE.md`'s "Search facts" quick-start example shows `GET /api/search?query=...&domain=...`, but `src/Deke.Api/Endpoints/SearchEndpoints.cs` implements `/api/search` as `POST` with a JSON body. Found incidentally by the OP-008d doc-maintainer pass while updating the neighboring "Add a source to monitor" example for the new `ApiKey` requirement; out of that packet's scope to fix.
+- Why deferred: doc/code mismatch, not a design disagreement — doesn't warrant an ADR. Flagged for a later doc-sync pass: either fix the example to `POST` with a body, or confirm a `GET` overload was intended and add it to the endpoint.

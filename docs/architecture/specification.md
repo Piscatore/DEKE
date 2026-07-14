@@ -199,7 +199,7 @@ Known DEKE instances for cross-instance queries.
 | is_healthy | BOOLEAN | Current health status |
 | created_at | TIMESTAMPTZ | When peer was first discovered |
 
-### Planned Tables (Package 1 Phase 1)
+### Planned Tables (P1-1)
 
 #### fact_provenance
 
@@ -372,12 +372,12 @@ Federation headers (inbound): `X-Federation-Request-Id`, `X-Federation-Visited`,
 |--------|------|---------|-------------|
 | POST | `/api/advisory` | P2 | Submit an advisory request, receive a grounded expert response |
 | GET | `/api/domains/{domain}/status` | P2 | Domain activation status and metrics |
-| POST | `/api/feedback` | P3 | Submit explicit feedback for an interaction |
-| GET | `/api/interactions` | P3 | Query interaction log |
-| GET | `/api/health/domain/{domain}` | P3 | Domain evolution health report |
-| GET | `/api/domains/{domain}/trust-policy` | P1-Phase1 | Domain trust policy configuration |
-| PUT | `/api/domains/{domain}/trust-policy` | P1-Phase1 | Update trust policy |
-| GET | `/api/review-queue` | P1-Phase2 | Facts pending human review |
+| POST | `/api/feedback` | EE | Submit explicit feedback for an interaction |
+| GET | `/api/interactions` | EE | Query interaction log |
+| GET | `/api/health/domain/{domain}` | EE | Domain evolution health report |
+| GET | `/api/domains/{domain}/trust-policy` | P1-1 | Domain trust policy configuration |
+| PUT | `/api/domains/{domain}/trust-policy` | P1-1 | Update trust policy |
+| GET | `/api/review-queue` | P1-2 | Facts pending human review |
 
 ---
 
@@ -603,9 +603,9 @@ The `ContainsConflictingEvidence` field (from Guardrail G5) is set when Package 
 
 ---
 
-## Package 3 Architecture
+## Evolution Engine Architecture
 
-The Evolution Engine is a research direction exploring self-improving advisory quality through prediction-error learning and adapter evolution. It is not part of the current product scope. For the full research vision, see [science/evolution-vision.md](../science/evolution-vision.md).
+The Evolution Engine is an active package at full parity with Package 1 (Knowledge Base) and Package 2 (Knowledge Leverage) under DEKE's Three-Package Architecture. It observes advisory outcomes and directs both knowledge acquisition and adapter behaviour through prediction-error learning and adapter evolution. For the full design, see [science/evolution-vision.md](../science/evolution-vision.md).
 
 ---
 

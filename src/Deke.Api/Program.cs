@@ -18,9 +18,15 @@ builder.Host.UseSerilog((context, config) =>
 var connectionString = builder.Configuration.GetConnectionString("Deke")
     ?? throw new InvalidOperationException("Connection string 'Deke' is required.");
 
+if (string.IsNullOrEmpty(builder.Configuration["ApiKey"]))
+{
+    throw new InvalidOperationException(
+        "Configuration key 'ApiKey' is required in every environment. Set it in " +
+        $"appsettings.{env.EnvironmentName}.local.json (gitignored) or via the ApiKey environment variable.");
+}
+
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
-builder.Services.AddDekeLlm(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
 
 // Authentication

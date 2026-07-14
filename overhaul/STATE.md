@@ -7,6 +7,138 @@
 
 ---
 
+## 2026-07-14 — OP-010: glossary lint script + CI hook, terms move to ENFORCED
+
+- Interviewed Mikael in two rounds. Round 1 (procedural): lint scope
+  docs/+src/, hardcoded path exclusions (no inline-suppress syntax), hard-fail
+  gate, all 3 `APPROVED` rows to `ENFORCED` together. Round 2 (substantive,
+  surfaced by this packet's own pre-build scan): ADR-0002 bans "Package
+  3"/"P3" as deprecated aliases of "Evolution Engine", but ADR-0002's own
+  resolution granted the subsystem "full parity with Package 1 and Package
+  2" under a Three-Package Architecture — and OP-008a's same-day
+  reconciliation had, correctly per that resolution, reintroduced "Package
+  3"/"P3-N" across 8 files. Building the lint as literally specified would
+  have failed CI against ~80 lines of correct, deliberate work. Mikael's
+  call: **keep the ban** (don't un-deprecate); new shorthand **EE-N**
+  replaces P3-N (new `GLOSSARY.md` row); `decisions.md`'s live Open Design
+  Questions sections get rewritten, its dated historical table stays
+  verbatim (same treatment OP-008a already gave it).
+- `docs/adr/` and `docs/INTENT.md`'s historical-narrative section were
+  given the same exemption as `decisions.md` without a third interview
+  round — mechanical extension of the same principle, flagged in
+  `OP-010.md` for Mikael to correct if wrong.
+- Also fixed, incidentally: `retrieval-pipeline.md`'s Phase R1 used the
+  real deprecated code names (`IChunkingService`/`SemanticChunkingService`)
+  as if unbuilt, and its Ingestion Stages table still said Chunk stage
+  "(none)" — an unresolved OP-003 `PARKING-LOT.md` item, now resolved.
+- `scripts/glossary-lint.sh`/`.ps1` written and wired into `build.yml` as a
+  hard-fail step. Found and fixed a real bug while testing locally: this
+  environment's GNU grep 3.0 (Git-for-Windows) silently drops an
+  `--exclude`/`--exclude-dir` flag placed before a later `--include` flag —
+  reordered so all `--include`s precede all `--exclude`s.
+- Verified: `bash scripts/glossary-lint.sh` exits 0 against current repo
+  state; `dotnet build` clean (0 errors, pre-existing ICU4N warnings only —
+  no `.cs` files were touched this packet). All 4 `GLOSSARY.md` rows now
+  `ENFORCED`.
+- **Next: OP-011** (roadmap rebuild) is next in the DAG.
+
+## 2026-07-14 — OP-008a/OP-008c/OP-008d/OP-008e/OP-009a/OP-009b: all six code-capable + doc-reconciliation packets closed
+
+- All 6 packets OP-006/OP-007's handover pointed to (see prior entry below) are
+  now done in one session. Doc-only packets (OP-009b, OP-009a, OP-008a) were
+  executed via `doc-maintainer` subagents per top-level `CLAUDE.md`'s
+  Documentation Governance section; code packets (OP-008d, OP-008e, OP-008c)
+  were implemented directly and each build+test+live-verified against the
+  real running Postgres/Ollama instances, not just code-reviewed.
+- **OP-009b** (`federation.md` ranking formula): rewritten to the real
+  five-factor formula (`similarity * confidence * credibility * recencyDecay
+  * localityWeight`), re-verified against `TrustScoringService.Score()` live
+  source rather than paraphrased from ADR-0005. Bonus: also caught and fixed
+  an adjacent, previously-unflagged drift in the same section — the
+  locality-weight table said flat "Local 1.0 / Peer 0.8" but real
+  `FederationConfig` uses a per-hop schedule (0.9/0.75/0.6, 0.5 beyond
+  `MaxHops`); folded into this fix rather than escalated separately, since
+  it's the same factor within the same section this packet was chartered to
+  correct.
+- **OP-008d** (`Deke.Api` ApiKey fail-fast): `Program.cs` now throws
+  `InvalidOperationException` at startup if `"ApiKey"` is unconfigured;
+  `ApiKeyAuthHandler`'s misleading `NoResult()` "allow all" branch removed
+  entirely. Verified live: no-key run throws immediately with a clear
+  message naming the missing config key; keyed run (`ApiKey=test-key-123`)
+  starts cleanly, `/health` returns 200 anonymous, `POST /api/sources`
+  returns 401 without/with-wrong key. `CLAUDE.md` quick-start and
+  `docs/PROJECT-MAP.md` updated via doc-maintainer.
+- **OP-008e** (`list_available_domains` fact-only fix): `SearchTools.
+  ListAvailableDomains` now unions `ISourceRepository`- and `IFactRepository.
+  GetDomainStatsAsync()`-derived domains, mirroring the pattern the
+  Federation manifest endpoint already used. Verified live against the real
+  Postgres instance: inserted a fact under a brand-new domain with
+  `SourceId = null`, confirmed the domain was absent from the tool's output
+  before the fix and present afterward (labeled "no registered source"),
+  then cleaned up the test row. `docs/PROJECT-MAP.md`'s Search Tools entry
+  updated via doc-maintainer.
+- **OP-009a** (P1-N normalize + Phase 5→4 renumber): `specification.md` and
+  `decisions.md` normalized to canonical `P1-N` shorthand;
+  `retrieval-pipeline.md`'s Phase 5 (multilingual model swap) renumbered to
+  Phase 4 in all three places it appeared. Note: the doc-maintainer subagent
+  running this packet hit an account-wide session-limit error mid-run,
+  right as it started editing `retrieval-pipeline.md` — verified afterward
+  via repo-wide grep that all three target files were nonetheless fully and
+  correctly normalized before it died (only Federation's separate, in-scope
+  "Phase 5" and the ADR-0003 historical record itself remain, both
+  correctly out of this packet's scope); nothing left dangling or
+  half-edited.
+- **OP-008a** (Three-Package Architecture doc reconciliation):
+  `docs/product/overview.md`, `docs/science/evolution-vision.md`, and
+  `docs/architecture/decisions.md` reconciled to describe the Evolution
+  Engine as active Package 3, per ADR-0002. Historical `decisions.md`
+  entries annotated in place (2026-04 deferral + `P3-*` entries), not
+  deleted or rewritten. **New escalation — ADR-0011 (proposed, design)**:
+  the 2026-04 "13-stage → 7-stage" advisory pipeline simplification was
+  partly justified by Package 3 being deferred; that precondition is now
+  reversed, so whether the removed stages (niche classification, quality
+  prediction, escalation, signal-emission) need to return is an open
+  `src/`-affecting design question the doc-maintainer subagent correctly did
+  not decide unilaterally.
+- **OP-008c** (retire `Llm/`, switch `PatternDiscoveryService` to
+  `IChatClient`): deleted `src/Deke.Infrastructure/Llm/` (`LlmConfig.cs`,
+  `GeminiLlmService.cs`, `OpenAiLlmService.cs`, `NoOpLlmService.cs`) and
+  `src/Deke.Core/Interfaces/ILlmService.cs` entirely — auto-mode's
+  destructive-action classifier required explicit user confirmation before
+  the delete, which Mikael gave. `PatternDiscoveryService` now resolves the
+  keyed `"ollama"` `IChatClient` (`AdvisoryClientKeys.Ollama`) instead,
+  wrapped in a try/catch that falls back to the old templated pattern
+  description if the call fails (mirrors the old `IsAvailable`-gated
+  fallback behavior, just against a real backend now instead of an inert
+  `NoOpLlmService`). `Deke.Worker/Program.cs` now calls
+  `AddAdvisoryChatClients` directly (not the full `AddDekeAdvisory`) —
+  narrower wiring, avoids pulling in the unrelated Advisory pipeline,
+  adapters, and interaction repository Worker doesn't need. Verified:
+  `dotnet build`/`dotnet test` (68/68) pass; repo-wide grep for
+  `ILlmService|LlmProvider|GeminiLlmService|OpenAiLlmService|
+  NoOpLlmService|LlmConfig` returns zero matches in any `.cs` file;
+  live-verified the actual keyed-client call path against a real local
+  Ollama instance (`qwen2.5:7b`) via a throwaway harness, got a real
+  summarization response back. `docs/PROJECT-MAP.md`'s Llm entry and all
+  four Host Composition entries (Api/Mcp/Worker/DI Composition Root)
+  updated via doc-maintainer to drop every stale `AddDekeLlm` reference,
+  not just the obvious one.
+- 2 PARKING-LOT items resolved in place (not deleted, annotated): the
+  `AddDekeLlm`-with-no-consumer item (OP-004d, resolved by OP-008c) and the
+  "Two-Package Architecture" stale-doc item (OP-005d, resolved by OP-008a).
+  1 new PARKING-LOT item logged: `CLAUDE.md`'s "Search facts" example uses
+  `GET /api/search`, but the real endpoint is `POST` with a JSON body —
+  found incidentally by the OP-008d doc-maintainer pass, out of scope for
+  that packet.
+- **Exit-criteria check** (§8, `OVERHAUL-SKETCH-v0.2.md`): criteria 1-4 were
+  already satisfied per the prior entry below. This session's work doesn't
+  touch criteria 5-8 (tooling re-verification, spec lint, roadmap rebuild,
+  fresh-agent acceptance test) — those remain OP-010..013, not yet started.
+- **Next:** ADR-0011 needs adjudication (advisory pipeline stage
+  restoration, spawned by OP-008a) before any packet it would spawn can be
+  sized. Otherwise OP-010 (tooling re-verification) is next in the DAG.
+- Open questions for Mikael: approve/reject/amend ADR-0011.
+
 ## 2026-07-07 — OP-006 + OP-007 run lightweight (done, both packets closed)
 
 - By execution time, **all 9 ADRs were already `accepted` and all 3

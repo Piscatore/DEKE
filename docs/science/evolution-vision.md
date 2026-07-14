@@ -1,8 +1,8 @@
-# Evolution Engine — Research Vision
+# Evolution Engine Design
 
-This document describes a research direction for self-improving knowledge systems. It is not part of DEKE's active product model. The concepts here inform future work if and when DEKE has sufficient user volume and query data to make learning mechanisms viable.
+This document describes the design of the Evolution Engine, one of DEKE's three core subsystems under the Three-Package Architecture --- the subsystem that learns which facts, adapter configurations, and knowledge gaps improve advisory quality over time. It is an active package at full parity with Package 1 (Knowledge Base) and Package 2 (Knowledge Leverage); see [ADR-0002](../adr/ADR-0002-evolution-engine-package-3-naming-status.md) for the resolution establishing this status. Several of its mechanisms rely on interaction volume to produce reliable signal --- see [Conditions for Full Effectiveness](#conditions-for-full-effectiveness) below --- but the package itself is part of the current product model, not deferred research.
 
-For DEKE's current product model, see [product/overview.md](../product/overview.md). For the decision to defer this work, see [architecture/decisions.md](../architecture/decisions.md).
+For DEKE's product model, see [product/overview.md](../product/overview.md). For the decision history, including the 2026-04 deferral and its 2026-07-07 reversal, see [architecture/decisions.md](../architecture/decisions.md).
 
 ---
 
@@ -56,16 +56,16 @@ Rather than a single adapter per domain, the Evolution Engine maintains an archi
 
 Evolution operates through mutation (successful adapters spawn variants), competition (variants run in shadow mode against incumbents), pruning (consistently poor variants are deprecated), and preservation (one baseline variant per niche is always preserved).
 
-## Prerequisites for Viability
+## Conditions for Full Effectiveness
 
-This research direction becomes viable when the following conditions are met:
+The Evolution Engine is an active part of DEKE's architecture, but several of its mechanisms are statistical by nature and only produce reliable signal once enough interaction data exists. The following conditions gate when each mechanism reaches full effectiveness --- they are rollout gates for specific signal tracks, the same progressive-activation pattern used by Package 1 and Package 2's own phase numbering (P1-N, P2-N), not a gate on whether the Evolution Engine itself is active:
 
 - **Multiple active domains** (3+) to provide diverse query patterns
 - **Sufficient query volume** (50+ queries per day) to produce statistically meaningful signals
 - **A measurable quality problem** that manual curation cannot solve
-- **Interaction logging** capturing data that future learning mechanisms can consume
+- **Interaction logging** capturing data the learning mechanisms can consume
 
-Until these conditions are met, the most effective approach is manual curation of knowledge quality and adapter configuration.
+Before these conditions are met, manual curation of knowledge quality and adapter configuration remains the primary mechanism in practice, alongside whatever automated signal collection is already running.
 
 ## Novel Contributions
 
@@ -77,4 +77,4 @@ Until these conditions are met, the most effective approach is manual curation o
 
 - [reinforcement-learning.md](reinforcement-learning.md) for the theoretical foundations.
 - [papers.md](papers.md) for supporting research references.
-- [architecture/decisions.md](../architecture/decisions.md) for the decision to defer this to research status.
+- [architecture/decisions.md](../architecture/decisions.md) for the decision history, including the 2026-04 deferral and its 2026-07-07 reversal via ADR-0002.

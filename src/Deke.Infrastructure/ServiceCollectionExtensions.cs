@@ -6,7 +6,6 @@ using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;
 using Deke.Infrastructure.Federation;
 using Deke.Infrastructure.Harvesters;
-using Deke.Infrastructure.Llm;
 using Deke.Infrastructure.Repositories;
 using Deke.Infrastructure.Trust;
 using Microsoft.Extensions.AI;
@@ -95,31 +94,6 @@ public static class ServiceCollectionExtensions
 
             options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
         });
-
-        return services;
-    }
-
-    public static IServiceCollection AddDekeLlm(
-        this IServiceCollection services, IConfiguration configuration)
-    {
-        var config = new LlmConfig();
-        configuration.GetSection("Llm").Bind(config);
-        services.AddSingleton(config);
-
-        switch (config.Provider)
-        {
-            case LlmProvider.Gemini:
-                services.AddHttpClient<ILlmService, GeminiLlmService>();
-                break;
-
-            case LlmProvider.OpenAi:
-                services.AddHttpClient<ILlmService, OpenAiLlmService>();
-                break;
-
-            default:
-                services.AddSingleton<ILlmService, NoOpLlmService>();
-                break;
-        }
 
         return services;
     }

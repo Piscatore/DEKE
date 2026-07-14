@@ -298,32 +298,28 @@ for which regions are done.
 - **Sources read:** `Federation/FederatedSearchService.cs`,
   `Federation/FederationClient.cs`.
 
-## Llm — Gemini/OpenAI Backend (ILlmService)  [KEEP, see Design smells]
-- **What it is:** `LlmConfig`/`LlmProvider` (`None, Gemini, OpenAi`),
-  `GeminiLlmService`, `OpenAiLlmService`, `NoOpLlmService` — a small
-  provider-switch implementation of `Deke.Core`'s `ILlmService`.
-- **Responsibility:** Owns a single-prompt-in, string-out LLM call. Its only
-  consumer in the whole solution is
-  `Deke.Worker/Services/PatternDiscoveryService.cs` (the background
-  pattern-discovery cycle) — confirmed via repo-wide grep.
-- **Key dependencies:** none within Deke.Infrastructure; consumed externally
-  by Deke.Worker.
-- **Naming issues:** none.
-- **Design smells:** **escalated as ADR-0006 (proposed).** This is a second,
-  independent LLM abstraction that coexists with the Advisory pipeline's
-  `IChatClient`-based system (see Advisory Pipeline entry below) — neither
-  `specification.md` nor `knowledge-leverage.md` documents Gemini/OpenAI at
-  all. More significantly: **ADR-0004** (accepted, resolved 2026-07-07)
-  claimed no Anthropic/Ollama implementation exists anywhere in `src/` and
-  scoped OP-008b to build one — that claim is false; ADR-0004's audit only
-  ever looked at this file. ADR-0006 corrects the record and asks Mikael to
-  adjudicate what, if anything, should happen to OP-008b and to this
-  second system's undocumented status.
+## Llm — Gemini/OpenAI Backend (ILlmService)  [RETIRED — see OP-008c]
+- **Status:** Retired. `src/Deke.Infrastructure/Llm/` (`LlmConfig`,
+  `GeminiLlmService`, `OpenAiLlmService`, `NoOpLlmService`) and
+  `Deke.Core`'s `ILlmService` interface have been deleted entirely, and the
+  `AddDekeLlm` DI registration removed. This was a second, independent LLM
+  abstraction that coexisted with the Advisory pipeline's `IChatClient`-based
+  system (see Advisory Pipeline Implementation entry below) — flagged as a
+  design smell in ADR-0006 (proposed), resolved by ADR-0007 (accepted), and
+  the retirement carried out by `overhaul/packets/OP-008c.md`. Confirmed via
+  repo-wide grep: zero remaining references to `ILlmService`, `LlmProvider`,
+  `GeminiLlmService`, `OpenAiLlmService`, `NoOpLlmService`, or `LlmConfig`
+  anywhere in `src/`.
+- **What replaced it:** `PatternDiscoveryService.cs` (see Pattern Discovery
+  entry, Deke.Worker region) was this system's sole consumer; it now resolves
+  the keyed `ollama` `IChatClient` (`AdvisoryClientKeys.Ollama`) through the
+  same `ChatClientRegistration`/`AddAdvisoryChatClients` infrastructure the
+  Advisory Pipeline Implementation entry describes, falling back to the old
+  templated pattern description on failure.
 - **Confidence:** HIGH
-- **Sources read:** `Llm/LlmConfig.cs`, `Llm/NoOpLlmService.cs`; grep
-  confirming `GeminiLlmService`/`OpenAiLlmService` are `ILlmService`
-  implementations and `PatternDiscoveryService.cs` is the only external
-  consumer.
+- **Sources read:** `overhaul/packets/OP-008c.md`;
+  `docs/adr/ADR-0007-gemini-openai-backend-undocumented-status.md`; grep
+  confirming zero remaining references in `src/`.
 
 ## Advisory Pipeline Implementation (Layer 2/3 concrete)  [KEEP]
 - **What it is:** The concrete fulfillment of `Deke.Core`'s Advisory Pipeline
@@ -358,10 +354,11 @@ for which regions are done.
   `DefaultAdvisoryAdapter.cs`, `SoftwareProductAdvisorAdapter.cs`.
 
 ## DI Composition Root  [KEEP]
-- **What it is:** `ServiceCollectionExtensions` — six extension methods
+- **What it is:** `ServiceCollectionExtensions` — five extension methods
   (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeHarvesters`,
-  `AddDekeFederation`, `AddDekeLlm`, `AddDekeAdvisory`) wiring every
-  component above into `IServiceCollection`.
+  `AddDekeFederation`, `AddDekeAdvisory`) wiring every component above into
+  `IServiceCollection`. (`AddDekeLlm` was the sixth method; retired by
+  OP-008c per ADR-0007 — see the Llm — Gemini/OpenAI Backend entry above.)
 - **Responsibility:** Owns the one place that maps every `Deke.Core`
   interface to its Infrastructure implementation — the ground truth for
   "what's actually registered," used throughout this region's entries to
@@ -463,7 +460,7 @@ for which regions are done.
 - **Confidence:** HIGH
 - **Sources read:** `Endpoints/FederationEndpoints.cs` (full).
 
-## API Key Authentication  [KEEP, see Design smells]
+## API Key Authentication  [KEEP]
 - **What it is:** `ApiKeyAuthHandler` — the sole `AuthenticationHandler`,
   checking an `X-Api-Key` request header against configuration key
   `"ApiKey"` under scheme name `"ApiKey"`, registered as the app's only
@@ -474,33 +471,38 @@ for which regions are done.
 - **Key dependencies:** consumed by `Program.cs`'s `AddAuthentication`
   registration; gates the write endpoints in the three entries above.
 - **Naming issues:** none.
-- **Design smells:** **escalated as ADR-0008 (proposed).** When
-  configuration key `"ApiKey"` is empty (`appsettings.json` ships it as
-  `""` by default), `HandleAuthenticateAsync` returns
-  `AuthenticateResult.NoResult()` behind an inline comment claiming this
-  "allow[s] all requests (development mode)." It does not: `NoResult()`
-  leaves the request unauthenticated, so every `RequireAuthorization()`
-  endpoint (`AddFact`, `AddSource`, `DeleteSource`, `AddPeer`, `DeletePeer`)
-  is rejected, not allowed, out of the box — the opposite of the stated
-  intent, and inconsistent with top-level `CLAUDE.md`'s own curl examples
-  (e.g. `POST /api/sources`) which show no `X-Api-Key` header.
+- **Design smells:** none — **resolved by OP-008d**, implementing ADR-0008's
+  accepted resolution. `Program.cs` now throws `InvalidOperationException`
+  at startup when configuration key `"ApiKey"` is empty or missing (checked
+  right after the connection-string check, before `AddDekeInfrastructure`
+  runs), so an unconfigured key can no longer reach request time in any
+  environment. `HandleAuthenticateAsync`'s `NoResult()` "allow all
+  (development mode)" branch — previously misleading, since `NoResult()`
+  actually left every `RequireAuthorization()` endpoint rejected rather than
+  allowed — has been removed; the handler now goes straight to its
+  header-check/Fail/Success logic, since the startup check guarantees
+  `configuredKey` is always set. Verified (not just code-reviewed): `dotnet
+  run` with no `"ApiKey"` configured fails fast with a clear error naming the
+  missing key; with `ApiKey` set, `/health` (anonymous) returns 200 and
+  `POST /api/sources` without/with a wrong `X-Api-Key` header returns 401.
+  Top-level `CLAUDE.md`'s Quick Start and curl examples updated to match.
 - **Confidence:** HIGH
 - **Sources read:** `Auth/ApiKeyAuthHandler.cs` (full); `appsettings.json`
-  (`ApiKey` key only); `Program.cs` (auth registration lines).
+  (`ApiKey` key only); `Program.cs` (auth registration + new startup check).
 
 ## Host Composition (Program.cs)  [KEEP]
 - **What it is:** The `WebApplication` builder/pipeline — Serilog, a
   gitignored local `appsettings.{env}.local.json` override, the `Deke`
-  connection string, four of `Deke.Infrastructure`'s six DI extension
-  methods (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeLlm`,
-  `AddDekeFederation` — not `AddDekeHarvesters` or `AddDekeAdvisory`), the
-  `ApiKey` auth scheme + `AuthenticatedOnly` fallback policy, OpenAPI, an
-  anonymous `/health` check, and the four `MapXEndpoints()` calls.
+  connection string, three of `Deke.Infrastructure`'s five DI extension
+  methods (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeFederation`
+  — not `AddDekeHarvesters` or `AddDekeAdvisory`), the `ApiKey` auth scheme +
+  `AuthenticatedOnly` fallback policy, OpenAPI, an anonymous `/health` check,
+  and the four `MapXEndpoints()` calls.
 - **Responsibility:** Owns the process entry point and this host's specific
-  slice of the DI Composition Root — which of Infrastructure's six extension
+  slice of the DI Composition Root — which of Infrastructure's five extension
   methods a REST-API process actually needs.
 - **Key dependencies:** →all four Endpoints entries above; →API Key
-  Authentication; →Deke.Infrastructure DI Composition Root (calls 4 of its 6
+  Authentication; →Deke.Infrastructure DI Composition Root (calls 3 of its 5
   methods).
 - **Naming issues:** none.
 - **Design smells:** none. `AddDekeHarvesters` and `AddDekeAdvisory` are
@@ -549,7 +551,7 @@ for which regions are done.
 - **Sources read:** `Tools/FactTools.cs` (full); `docs/architecture/
   specification.md:369-395` (MCP Tools section, cross-check only).
 
-## Search Tools  [KEEP, see Design smells]
+## Search Tools  [KEEP]
 - **What it is:** `SearchTools` — three MCP tools: `consult_domain_expert`
   (semantic search via `IFederatedSearchService.SearchAsync`, `federation`
   argument always `null`), `get_context` (same service's `GetContextAsync`,
@@ -563,31 +565,35 @@ for which regions are done.
 - **Key dependencies:** →Deke.Core Federation (`IFederatedSearchService`,
   same interface `Deke.Infrastructure/Federation/FederatedSearchService.cs`
   implements; `IFederationPeerRepository.GetHealthyAsync`); →Deke.Core Fact &
-  Source Domain (`ISourceRepository.GetAllAsync`, for local domain discovery
-  — see Design smells).
+  Source Domain (`ISourceRepository.GetAllAsync` and
+  `IFactRepository.GetDomainStatsAsync`, both for local domain discovery —
+  see Design smells).
 - **Naming issues:** none against `docs/GLOSSARY.md`'s canonical terms. Tool
   names here are consistently snake_case (`consult_domain_expert`,
   `get_context`, `list_available_domains`) — the sole exception across this
   whole project is `AdvisoryTools.GetDomainAdvice` (see that entry); noted
   here for completeness, not re-logged.
-- **Design smells:** **escalated as ADR-0009 (proposed).**
-  `ListAvailableDomains` builds its "Local Domains" list exclusively from
-  `ISourceRepository.GetAllAsync()` — it never calls
-  `IFactRepository.GetDomainStatsAsync()`. Top-level `CLAUDE.md`'s documented
-  workflow ("Add a new domain: Just start adding facts with the domain name
-  — no pre-configuration needed") is exactly what this file's sibling
-  `FactTools.AddFact` supports: it stores a `Fact` with an arbitrary `domain`
-  string and no `SourceId` (confirmed nullable via `FactTools.GetFact`'s
-  `fact.SourceId.HasValue` check). A domain created this documented way is
-  therefore invisible to `list_available_domains`, even though
-  `IFactRepository.GetDomainStatsAsync()` — already used correctly by
-  `Deke.Api`'s Federation manifest endpoint, per this file's Federation
-  Endpoints entry — exists precisely to answer this.
+- **Design smells:** none — **resolved by OP-008e**, implementing ADR-0009's
+  accepted resolution. `ListAvailableDomains` now takes an added
+  `IFactRepository factRepository` parameter and builds its "Local Domains"
+  list from a union of `ISourceRepository.GetAllAsync()`-derived domains and
+  `IFactRepository.GetDomainStatsAsync()`-derived domains, mirroring the
+  pattern `Deke.Api`'s Federation manifest endpoint already used (per this
+  file's Federation Endpoints entry). Each domain line now shows source
+  count and/or fact count depending on what's available; a fact-only domain
+  (created via top-level `CLAUDE.md`'s documented zero-config `add_fact`
+  workflow, no `SourceId` ever registered) is labeled "no registered
+  source" instead of being omitted. Verified (not just code-reviewed):
+  a fact inserted under a brand-new domain with `SourceId = null` did not
+  appear in `list_available_domains`'s output before the fix, and appeared
+  afterward as `**domain** (1 fact(s), no registered source)`, against the
+  live Postgres instance.
 - **Confidence:** HIGH
-- **Sources read:** `Tools/SearchTools.cs` (full);
+- **Sources read:** `Tools/SearchTools.cs` (full, post-fix);
   `src/Deke.Core/Interfaces/IFactRepository.cs` (`GetDomainStatsAsync`
   signature, re-confirmed); cross-referenced against this file's own
-  Federation Endpoints entry (`Deke.Api` region, above).
+  Federation Endpoints entry (`Deke.Api` region, above); ADR-0009
+  (accepted, resolution recorded 2026-07-07).
 
 ## Advisory Tools  [KEEP, see Naming issues]
 - **What it is:** `AdvisoryTools` — one MCP tool, `GetDomainAdvice`, the
@@ -613,13 +619,13 @@ for which regions are done.
 - **Sources read:** `Tools/AdvisoryTools.cs` (full); `docs/architecture/
   specification.md:393` (cross-check only).
 
-## Host Composition (Program.cs)  [KEEP, see Design smells]
+## Host Composition (Program.cs)  [KEEP]
 - **What it is:** The `Host` builder — user-secrets loaded unconditionally
   (not gated to Development, so an Anthropic API key set via `dotnet
   user-secrets` is picked up when run as an MCP server), Serilog, the `Deke`
-  connection string, five of `Deke.Infrastructure`'s six DI extension
-  methods (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeLlm`,
-  `AddDekeFederation`, `AddDekeAdvisory` — not `AddDekeHarvesters`), and
+  connection string, four of `Deke.Infrastructure`'s five DI extension
+  methods (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeFederation`,
+  `AddDekeAdvisory` — not `AddDekeHarvesters`), and
   `AddMcpServer().WithStdioServerTransport()` registering all three `Tools/`
   classes.
 - **Responsibility:** Owns the process entry point and this host's specific
@@ -627,19 +633,15 @@ for which regions are done.
   stdio, not HTTP, so no authentication scheme (unlike `Deke.Api`'s API Key
   Authentication) is needed or present.
 - **Key dependencies:** →all three Tools entries above; →Deke.Infrastructure
-  DI Composition Root (calls 5 of its 6 methods).
+  DI Composition Root (calls 4 of its 5 methods).
 - **Naming issues:** none.
-- **Design smells:** none rising to ADR level. `AddDekeLlm` is registered,
-  but no code anywhere in `src/Deke.Mcp` references `ILlmService` (`Tools/`
-  classes use only `IFactRepository`, `IEmbeddingService`,
-  `IFederatedSearchService`, `ISourceRepository`, `IFederationPeerRepository`,
-  `IAdvisoryPipeline`) — the Gemini/OpenAI backend this registers is consumed
-  solely by `Deke.Worker/PatternDiscoveryService.cs` per ADR-0006/ADR-0007.
-  `Deke.Api`'s Host Composition entry above shows the identical pattern
-  (`AddDekeLlm` called, unused there too), so this is a pre-existing
-  cross-project DI-hygiene nit, not new to this file. Logged to
-  `PARKING-LOT.md` rather than re-escalated — ADR-0007 (accepted: retire
-  `Llm/`, spawns OP-008c) already covers this system's fate.
+- **Design smells:** none. Previously this entry logged a pre-existing
+  cross-project DI-hygiene nit — `AddDekeLlm` registered here but unused by
+  any `src/Deke.Mcp` code, the Gemini/OpenAI backend actually being consumed
+  solely by `Deke.Worker/PatternDiscoveryService.cs`. That nit is resolved:
+  OP-008c (per ADR-0007, accepted) deleted `AddDekeLlm` and the `Llm/`
+  system it registered entirely — see the Llm — Gemini/OpenAI Backend entry
+  in the `Deke.Infrastructure` region above. Nothing remains to log.
 - **Confidence:** HIGH
 - **Sources read:** `Program.cs` (full); `Deke.Mcp.csproj` (full);
   `appsettings.json`, `appsettings.Development.json` (full, both small).
@@ -722,10 +724,10 @@ for which regions are done.
   records — the Term & Pattern Domain's write path.
 - **Key dependencies:** →Deke.Core Term & Pattern Domain (`IPatternRepository`,
   `Pattern`, `ILearningLogRepository`); →Deke.Core Fact & Source Domain
-  (`IFactRepository.GetRecentAsync`); →Deke.Infrastructure Llm — Gemini/OpenAI
-  Backend (`ILlmService`) — this file is confirmed (by direct read, not just
-  grep) as that entry's sole solution-wide consumer, matching ADR-0006/
-  ADR-0007.
+  (`IFactRepository.GetRecentAsync`); →Deke.Infrastructure Advisory Pipeline
+  Implementation (keyed `IChatClient`, resolved via `AdvisoryClientKeys.Ollama`)
+  — replaces the retired Llm — Gemini/OpenAI Backend entry above, per
+  ADR-0007/OP-008c.
 - **Naming issues:** none.
 - **Design smells:** none newly found — the `ILlmService` dependency is
   already covered by ADR-0006 (proposed → accepted) and ADR-0007 (accepted,
@@ -775,23 +777,38 @@ for which regions are done.
 
 ## Host Composition (Program.cs)  [KEEP]
 - **What it is:** A dual-mode entry point. Normal mode: Serilog, the `Deke`
-  connection string, five of `Deke.Infrastructure`'s six DI extension methods
+  connection string, four of `Deke.Infrastructure`'s five DI extension methods
   (`AddDekeInfrastructure`, `AddDekeEmbeddings`, `AddDekeHarvesters`,
-  `AddDekeLlm`, `AddDekeFederation` — not `AddDekeAdvisory`), then registers
-  all four `BackgroundService`s as hosted services and calls `host.Run()`.
-  `--bootstrap <path>` mode: builds the host, resolves
-  `BootstrapIngestionService` from a fresh DI scope, runs it once against the
-  given (or current) directory, and returns — no hosted services ever start.
+  `AddDekeFederation` — not the full `AddDekeAdvisory`), plus a direct call to
+  `AddAdvisoryChatClients` (`Advisory/ChatClientRegistration.cs` — the same
+  keyed-`IChatClient` registration `AddDekeAdvisory` itself calls internally,
+  registering both the `anthropic` and `ollama` keyed backends) so
+  `PatternDiscoveryService` can resolve the keyed `ollama` `IChatClient`
+  without pulling in the rest of `AddDekeAdvisory`'s registrations
+  (`ITrustScoringService`, `ILlmSelectionPolicy`,
+  `IAdvisoryInteractionRepository`, `IAdvisoryAdapter`, `IAdvisoryPipeline`) —
+  this narrower wiring replaces the retired `AddDekeLlm` call, per
+  OP-008c/ADR-0007. It then registers all four `BackgroundService`s as hosted
+  services and calls `host.Run()`. `--bootstrap <path>` mode: builds the
+  host, resolves `BootstrapIngestionService` from a fresh DI scope, runs it
+  once against the given (or current) directory, and returns — no hosted
+  services ever start.
 - **Responsibility:** Owns the process entry point and this host's specific
   slice of the DI Composition Root, including the branch that decides whether
   this run is a long-lived worker or a one-shot bootstrap CLI invocation.
 - **Key dependencies:** →all five `Services/` entries above; →Deke.Infrastructure
-  DI Composition Root (calls 5 of its 6 methods).
+  DI Composition Root (calls 4 of its 5 methods, plus a direct call to
+  `AddAdvisoryChatClients`, a piece of `AddDekeAdvisory`'s own registration,
+  not one of the Composition Root's five methods itself).
 - **Naming issues:** none.
-- **Design smells:** none. `AddDekeAdvisory` is deliberately absent — no file
-  under `src/Deke.Worker` references `IAdvisoryPipeline` (confirmed by direct
-  read of all five `Services/` files), consistent with `Deke.Api`'s and
-  `Deke.Mcp`'s Host Composition entries' own advisory-registration split.
+- **Design smells:** none. The full `AddDekeAdvisory` is deliberately absent
+  — no file under `src/Deke.Worker` references `IAdvisoryPipeline` (confirmed
+  by direct read of all five `Services/` files); only the keyed-`IChatClient`
+  slice it depends on (`AddAdvisoryChatClients`) is pulled in directly, for
+  `PatternDiscoveryService`'s Ollama-backed summarization (see that entry,
+  above). This is a narrower, partial wiring — not simply "absent" the way
+  `Deke.Api`'s and `Deke.Mcp`'s Host Composition entries' advisory-
+  registration split is a plain present/absent call to the full method.
 - **Confidence:** HIGH
 - **Sources read:** `Program.cs` (full); `Deke.Worker.csproj` (full).
 
