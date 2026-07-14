@@ -1,7 +1,7 @@
 {
   "agentVersion": "1.12.0",
   "createdAt": "2026-03-11",
-  "updatedAt": "2026-03-11",
+  "updatedAt": "2026-07-14",
   "contentType": "standard",
   "operation": "active",
   "scope": {
@@ -11,7 +11,7 @@
       "CONTRIBUTING.md",
       "CLAUDE.md",
       "docs/INDEX.md",
-      "docs/roadmap.md",
+      "docs/ROADMAP.md",
       "docs/product/",
       "docs/architecture/",
       "docs/science/"

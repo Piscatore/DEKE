@@ -2,7 +2,7 @@
 
 Technical design for DEKE's retrieval pipeline: how facts are ingested, chunked, embedded, indexed, searched, and ranked. This document covers the DEKE-specific implementation plan and library choices.
 
-For the underlying concepts of semantic chunking, re-ranking, and retrieval evaluation, see [science/retrieval-theory.md](../science/retrieval-theory.md). For the product roadmap context, see [product/roadmap.md](../product/roadmap.md).
+For the underlying concepts of semantic chunking, re-ranking, and retrieval evaluation, see [science/retrieval-theory.md](../science/retrieval-theory.md). For the product roadmap context, see [ROADMAP.md](../ROADMAP.md).
 
 ---
 

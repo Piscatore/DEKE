@@ -2,7 +2,7 @@
 
 Technical design for DEKE's federation protocol, enabling multiple DEKE instances to share knowledge across organizational and domain boundaries.
 
-For federation's role in the product roadmap, see [product/roadmap.md](../product/roadmap.md). For the main technical reference, see [specification.md](specification.md).
+For federation's role in the product roadmap, see [ROADMAP.md](../ROADMAP.md). For the main technical reference, see [specification.md](specification.md).
 
 ---
 

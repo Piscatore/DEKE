@@ -43,7 +43,7 @@ This index provides a navigable overview of all DEKE project documentation.
 
 | Document | Type | Description |
 |----------|------|-------------|
-| [roadmap.md](roadmap.md) | Living | Phase summary across all packages |
+| [ROADMAP.md](ROADMAP.md) | Living | Packet DAG of all planned work: sized packets with dependencies, budgets, and tiers |
 
 ## Tooling & Decisions
 
@@ -77,7 +77,7 @@ DEKE/
     ├── GLOSSARY.md                     Canonical ontology (Overhaul artifact)
     ├── PROJECT-MAP.md                  Component inventory (Overhaul artifact)
     ├── INTENT.md                       Distilled design intentions (Overhaul artifact)
-    ├── roadmap.md                      Implementation phases and milestones
+    ├── ROADMAP.md                      Packet DAG of all planned work (Overhaul artifact)
     ├── product/                        "What" — system model and behavior
     │   ├── overview.md                 Vision and two-package architecture
     │   ├── knowledge-base.md           Knowledge integrity
@@ -110,7 +110,7 @@ Actively maintained as the project evolves.
 
 **Architecture**: Updated when technical decisions are made, implementations change, or new design questions arise. `decisions.md` carries the architecture decision log.
 
-**Planning**: `roadmap.md` updated at each milestone.
+**Planning**: `ROADMAP.md` updated at each milestone.
 
 ### Reference Documents
 
@@ -120,7 +120,7 @@ The `science/` branch contains curated research that ages gracefully. Updated wh
 
 - **Root documents**: UPPERCASE filenames (e.g., `README.md`, `CONTRIBUTING.md`)
 - **docs/ files**: lowercase-with-hyphens (e.g., `retrieval-pipeline.md`)
-- **DEKE Overhaul artifacts** (`TOOLING.md`, `GLOSSARY.md`, `PROJECT-MAP.md`, and later `INTENT.md`, `ROADMAP.md`) are uppercase by deliberate exception — see `/overhaul/OVERHAUL-SKETCH-v0.2.md` §2
+- **DEKE Overhaul artifacts** (`TOOLING.md`, `GLOSSARY.md`, `PROJECT-MAP.md`, `INTENT.md`, `ROADMAP.md`) are uppercase by deliberate exception — see `/overhaul/OVERHAUL-SKETCH-v0.2.md` §2
 - **Tone**: Formal
 - **Headings**: Single H1 per file
 - **Code**: Inline backticks for short codes, fenced blocks with language tags

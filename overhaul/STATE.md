@@ -7,6 +7,29 @@
 
 ---
 
+## 2026-07-14 — OP-011: roadmap rebuilt as sized packet DAG (docs/ROADMAP.md)
+
+- Prior OP-008/009/010 work batch-committed first (`aed86bb`, Mikael's call).
+- `docs/roadmap.md` → `docs/ROADMAP.md` (renamed per sketch §2; fixed 3
+  *pre-existing broken* `product/roadmap.md` inbound links + 4 more sites).
+  Old roadmap's Current State was badly stale — all three "Not yet built"
+  items (trust layer, chunking, bootstrap) were in fact built; **MVP is
+  delivered in full**; rebuilt roadmap opens post-MVP.
+- DAG: **P1-1 first priority** (critical path, data already accumulating);
+  RES-1 (ADR-0010 research, old "BM25 hybrid" line folded in) early+parallel;
+  HYG-1/2/3 promoted from PARKING-LOT; R2/P1-2/R4/R5/EE1-DESIGN
+  dependency-gated; R7/R8/P1-3/R3/FED-4/FED-5/DOM-2/P1-4 later; R6 +
+  EE-2..5/Curiosity + OI-01..10 trigger-gated (tiered sizing, Mikael's call).
+  EE1-DESIGN carries ADR-0011's revisit trigger. All 12 PARKING-LOT items
+  dispositioned (6 promoted, 1 resolved, 1 split, 4 stay parked).
+- Verified: glossary lint exit 0 (run post-install by doc-maintainer; later
+  edits touched only `overhaul/`, outside scan scope); build untouched (zero
+  `.cs` changes this packet — a fresh `dotnet build` re-run was blocked by a
+  transient harness outage, re-run at commit time); `roadmap.md` refs remain
+  only in the 2 exempt historical files. Exit criterion 7 satisfied.
+- **Next: OP-012** (review packet — verify exit criteria 1-8, re-run
+  TOOLING.md verification suite), then OP-013 (dissolution).
+
 ## 2026-07-14 — OP-010: glossary lint script + CI hook, terms move to ENFORCED
 
 - Interviewed Mikael in two rounds. Round 1 (procedural): lint scope

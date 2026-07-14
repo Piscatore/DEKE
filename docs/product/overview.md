@@ -62,7 +62,7 @@ These principles span all three packages and guide architectural decisions.
 
 ## Current Status
 
-For detailed progress tracking, see [roadmap.md](../roadmap.md).
+For detailed progress tracking, see [ROADMAP.md](../ROADMAP.md).
 
 See also: [architecture/specification.md](../architecture/specification.md) for implementation details.
 

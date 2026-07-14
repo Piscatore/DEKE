@@ -517,7 +517,7 @@ public class SourceMonitorService(
 
 ## Package 2 Architecture
 
-Package 2 (Knowledge Leverage) transforms accumulated knowledge into grounded advisory responses. For product context, see [product/roadmap.md](../product/roadmap.md).
+Package 2 (Knowledge Leverage) transforms accumulated knowledge into grounded advisory responses. For product context, see [ROADMAP.md](../ROADMAP.md).
 
 ### Three-Layer Stack
 

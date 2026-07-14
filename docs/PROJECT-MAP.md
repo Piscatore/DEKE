@@ -697,7 +697,7 @@ for which regions are done.
 - **Design smells:** none rising to ADR level — behavior is correct and
   intentional (a one-shot CLI seed step, not a background job, hence the
   bare-class-not-`BackgroundService` shape). Two cross-doc gaps logged to
-  `PARKING-LOT.md` instead: (1) `docs/roadmap.md`'s "Not yet built" list and
+  `PARKING-LOT.md` instead: (1) `docs/ROADMAP.md`'s "Not yet built" list and
   MVP table (lines 17, 31) both mark bootstrap ingestion "Planned" — it is
   fully implemented; `specification.md`'s project-structure tree
   (`specification.md:65-66`) lists only 2 of `Deke.Worker`'s 4
@@ -708,7 +708,7 @@ for which regions are done.
 - **Confidence:** HIGH
 - **Sources read:** `Services/BootstrapIngestionService.cs` (full);
   `Program.cs` (`--bootstrap` branch); `docs/product/knowledge-leverage.md`
-  (bootstrap framing, cross-check only); `docs/roadmap.md`,
+  (bootstrap framing, cross-check only); `docs/ROADMAP.md`,
   `docs/architecture/specification.md:55-69` (cross-check only).
 
 ## Pattern Discovery  [KEEP]
