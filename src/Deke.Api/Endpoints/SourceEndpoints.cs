@@ -58,6 +58,11 @@ public static class SourceEndpoints
             .WithDescription("Add a new source to monitor")
             .RequireAuthorization();
 
+        group.MapPut("/{id:guid}", UpdateSource)
+            .WithName("UpdateSource")
+            .WithDescription("Update a source's configuration")
+            .RequireAuthorization();
+
         group.MapDelete("/{id:guid}", DeleteSource)
             .WithName("DeleteSource")
             .WithDescription("Delete a source")
@@ -112,6 +117,35 @@ public static class SourceEndpoints
         return Results.Created($"/api/sources/{id}", new { id });
     }
 
+    internal static async Task<IResult> UpdateSource(
+        Guid id,
+        UpdateSourceRequest request,
+        ISourceRepository sourceRepo,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Url))
+            return Results.BadRequest(new { error = "URL is required." });
+        if (string.IsNullOrWhiteSpace(request.Domain))
+            return Results.BadRequest(new { error = "Domain is required." });
+        if (!IsValidPublicUrl(request.Url))
+            return Results.BadRequest(new { error = "URL must be a valid public HTTP(S) URL. Private/loopback addresses are not allowed." });
+
+        var source = await sourceRepo.GetByIdAsync(id, ct);
+        if (source is null)
+            return Results.NotFound();
+
+        source.Url = request.Url;
+        source.Domain = request.Domain;
+        source.Name = request.Name ?? source.Name;
+        source.Type = request.Type ?? source.Type;
+        source.CheckInterval = request.CheckInterval ?? source.CheckInterval;
+        source.Credibility = request.Credibility ?? source.Credibility;
+        source.IsActive = request.IsActive ?? source.IsActive;
+
+        await sourceRepo.UpdateAsync(source, ct);
+        return Results.Ok(source);
+    }
+
     private static async Task<IResult> DeleteSource(
         Guid id,
         ISourceRepository sourceRepo,
@@ -130,3 +164,12 @@ public record AddSourceRequest(
     SourceType? Type = null,
     TimeSpan? CheckInterval = null,
     float? Credibility = null);
+
+public record UpdateSourceRequest(
+    string Url,
+    string Domain,
+    string? Name = null,
+    SourceType? Type = null,
+    TimeSpan? CheckInterval = null,
+    float? Credibility = null,
+    bool? IsActive = null);

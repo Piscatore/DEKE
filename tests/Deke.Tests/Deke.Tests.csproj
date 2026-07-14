@@ -16,6 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Deke.Api\Deke.Api.csproj" />
     <ProjectReference Include="..\..\src\Deke.Core\Deke.Core.csproj" />
     <ProjectReference Include="..\..\src\Deke.Infrastructure\Deke.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Deke.Worker\Deke.Worker.csproj" />
