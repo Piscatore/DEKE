@@ -107,12 +107,15 @@ TRIGGER-GATED (sized only when the trigger fires)
 
 ### HYG-1: Doc-sync sweep
 
-- **Goal:** Fix the five known doc/code mismatches: `FactTools`' three MCP
+- **Goal:** Fix the six known doc/code mismatches: `FactTools`' three MCP
   tools missing from specification.md's MCP Tools table; bootstrap ingestion
   still absent from specification.md's project-structure tree; top-level
   CLAUDE.md's search example says GET where the endpoint is POST; README.md +
   CLAUDE.md never adopted the package model; dangling root SPECIFICATION.md
-  reference in specification.md.
+  reference in specification.md; CLAUDE.md's add-source example sends
+  `"type":"Rss"` but `SourceType` has no string-enum JSON converter, so the
+  documented call 400s (fix the doc or add the converter — decide at
+  execution).
 - **Depends on:** nothing.
 - **Context budget:** the named sections only; PARKING-LOT.md entries dated
   2026-07-07/14 for each item.

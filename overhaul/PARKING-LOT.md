@@ -16,6 +16,12 @@ Format:
 
 ---
 
+## 2026-07-14 — CLAUDE.md add-source example 400s (enum binding)
+- Raised during: OP-012 (found by the criterion-8 acceptance-test agent while live-verifying HYG-2)
+- What: top-level CLAUDE.md's "Add a source to monitor" curl example sends `"type":"Rss"`, but `SourceType` has no string-enum JSON converter configured, so the documented call fails model binding with 400 — clients must currently send the enum as an integer.
+- Why deferred: doc-or-code decision (fix the example vs. add `JsonStringEnumConverter`) belongs to HYG-1's executor, not a review packet.
+- **Promoted 2026-07-14 by OP-012**: appended as HYG-1's sixth item in `docs/ROADMAP.md`.
+
 ## 2026-07-07 — cwm-roslyn-navigator TargetFramework misreport
 - Raised during: OP-002
 - What: `get_project_graph` reports `TargetFramework: netcoreapp1.0` for every DEKE project; actual is `net9.0` (confirmed via obj/ output and a successful `dotnet build`).

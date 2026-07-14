@@ -1,6 +1,13 @@
 {
+  "permissions": {
+    "deny": [
+      "LSP",
+      "DesignSync"
+    ]
+  },
   "deniedMcpServers": [
     { "serverName": "docker-mcp" },
+    { "serverName": "DesignSync" },
     { "serverName": "sqlcl" },
     { "serverName": "windows-desktop" },
     { "serverName": "system-monitor" },
@@ -26,7 +33,8 @@
     "verbose-status": "off",
     "dataviz": "off",
     "artifact-design": "off",
-    "playwright-skill": "off"
+    "playwright-skill": "off",
+    "playwright-skill:playwright-skill": "off"
   },
   "hooks": {
     "PostToolUse": [

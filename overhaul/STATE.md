@@ -7,6 +7,20 @@
 
 ---
 
+## 2026-07-14 — OP-012: review packet — all 8 exit criteria PASS
+
+- Criteria 1-7 verified fresh (evidence table in `packets/OP-012.md`):
+  glossary 4/4 ENFORCED, map 38/38 HIGH, INTENT clean, 11/11 ADRs accepted,
+  tooling suite 8/8, lint exit 0, ROADMAP DAG shape confirmed.
+- Criterion 8 (Mikael: real run): fresh subagent given only /docs + HYG-2
+  completed it — 3 endpoints, 12 tests (80/80), live-verified, **zero
+  orientation questions**. HYG-2 thereby done early; ROADMAP status update
+  deferred to OP-013's doc pass. Ride-along: CLAUDE.md `"type":"Rss"`
+  example 400s (no string-enum converter) → appended to HYG-1 list.
+- Remaining 4 DISCONNECTs executed (Mikael's call): LSP+DesignSync denied,
+  playwright-skill override re-keyed (`.claude/settings.json`).
+- **Next: OP-013 (dissolution)** — nothing blocks it.
+
 ## 2026-07-14 — OP-011: roadmap rebuilt as sized packet DAG (docs/ROADMAP.md)
 
 - Prior OP-008/009/010 work batch-committed first (`aed86bb`, Mikael's call).
