@@ -66,6 +66,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IContentHasher, ContentHasher>();
         services.AddSingleton<ISimHasher, SimHasher>();
+        services.AddScoped<IDuplicateLinker, DuplicateLinker>();
         services.AddScoped<IDeduplicationService, DeduplicationService>();
 
         return services;

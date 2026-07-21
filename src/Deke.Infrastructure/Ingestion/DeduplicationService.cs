@@ -14,17 +14,20 @@ public class DeduplicationService : IDeduplicationService
     private readonly IFactRepository _facts;
     private readonly IFactProvenanceRepository _provenance;
     private readonly IContentHasher _hasher;
+    private readonly IDuplicateLinker _linker;
     private readonly ILogger<DeduplicationService> _logger;
 
     public DeduplicationService(
         IFactRepository facts,
         IFactProvenanceRepository provenance,
         IContentHasher hasher,
+        IDuplicateLinker linker,
         ILogger<DeduplicationService> logger)
     {
         _facts = facts;
         _provenance = provenance;
         _hasher = hasher;
+        _linker = linker;
         _logger = logger;
     }
 
@@ -36,12 +39,12 @@ public class DeduplicationService : IDeduplicationService
         // Level 2: exact content match.
         var existing = await _facts.GetByContentHashAsync(contentHash, fact.Domain, ct);
         if (existing is not null)
-            return await CorroborateAsync(existing, fact, method, 2, ct);
+            return await CorroborateAsync(existing, fact, 2, ct);
 
         // Level 3: normalized match.
         existing = await _facts.GetByNormalizedHashAsync(normalizedHash, fact.Domain, ct);
         if (existing is not null)
-            return await CorroborateAsync(existing, fact, method, 3, ct);
+            return await CorroborateAsync(existing, fact, 3, ct);
 
         // Novel fact: persist with its hashes. similarity_hash is left NULL for
         // the level-4 job to fill.
@@ -55,7 +58,7 @@ public class DeduplicationService : IDeduplicationService
             // checks above and the insert: an equal fact landed first.
             var winner = await _facts.GetByIdAsync(storedId, ct);
             if (winner is not null)
-                return await CorroborateAsync(winner, fact, method, 3, ct);
+                return await CorroborateAsync(winner, fact, 3, ct);
         }
 
         await WriteProvenanceAsync(storedId, fact.SourceId, method, fact.Confidence, ct);
@@ -63,20 +66,9 @@ public class DeduplicationService : IDeduplicationService
     }
 
     private async Task<DedupResult> CorroborateAsync(
-        Fact canonical, Fact incoming, ExtractionMethod method, int level, CancellationToken ct)
+        Fact canonical, Fact incoming, int level, CancellationToken ct)
     {
-        // Only a genuinely new source raises the corroboration count; re-supply
-        // from a source already on the fact is a no-op beyond the provenance upsert.
-        if (incoming.SourceId is Guid source)
-        {
-            var links = await _provenance.GetByFactIdAsync(canonical.Id, ct);
-            var isNewSource = !links.Any(p => p.SourceId == source);
-
-            await WriteProvenanceAsync(canonical.Id, source, ExtractionMethod.Corroboration, incoming.Confidence, ct);
-
-            if (isNewSource)
-                await _facts.IncrementCorroborationAsync(canonical.Id, ct);
-        }
+        await _linker.CorroborateAsync(canonical.Id, incoming.SourceId, incoming.Confidence, ct);
 
         _logger.LogInformation(
             "Dedup L{Level}: fact {Incoming} duplicates {Canonical} in domain {Domain}",
