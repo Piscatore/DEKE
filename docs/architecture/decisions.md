@@ -116,6 +116,11 @@ container (running ~2 weeks at time of discovery) is missing the `interaction_lo
 table that `init.sql` has always defined -- pre-existing schema drift, unrelated to
 P1-1, predating this work. Not fixed here; flagged for follow-up.
 
+**Follow-up (2026-07-21):** Closed. `CREATE TABLE interaction_logs` and its two
+indexes (`idx_interaction_logs_created`, `idx_interaction_logs_domain`) were applied
+to the live container from `init.sql`'s existing definition -- no code or `init.sql`
+changes needed. All 12 `init.sql` tables now present, verified via `\dt`.
+
 ---
 
 ## Guardrails and Risk Analysis
