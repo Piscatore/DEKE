@@ -42,7 +42,7 @@ public class SourceMonitorService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var sourceRepo = scope.ServiceProvider.GetRequiredService<ISourceRepository>();
-        var factRepo = scope.ServiceProvider.GetRequiredService<IFactRepository>();
+        var dedup = scope.ServiceProvider.GetRequiredService<IDeduplicationService>();
         var harvesters = scope.ServiceProvider.GetRequiredService<IEnumerable<IHarvester>>();
         var embeddingService = scope.ServiceProvider.GetRequiredService<IEmbeddingService>();
         var extractionService = scope.ServiceProvider.GetRequiredService<IExtractionService>();
@@ -103,8 +103,9 @@ public class SourceMonitorService : BackgroundService
                                     Entities = extracted.Entities
                                 };
 
-                                await factRepo.AddAsync(fact, ct);
-                                factsAdded++;
+                                var dedupResult = await dedup.IngestAsync(fact, MapMethod(source.Type), ct);
+                                if (!dedupResult.WasDuplicate)
+                                    factsAdded++;
                             }
                         }
                     }
@@ -120,4 +121,12 @@ public class SourceMonitorService : BackgroundService
             }
         }
     }
+
+    private static ExtractionMethod MapMethod(SourceType type) => type switch
+    {
+        SourceType.Rss => ExtractionMethod.RssHarvest,
+        SourceType.WebPage => ExtractionMethod.WebHarvest,
+        SourceType.File => ExtractionMethod.FileHarvest,
+        _ => ExtractionMethod.ManualApi
+    };
 }

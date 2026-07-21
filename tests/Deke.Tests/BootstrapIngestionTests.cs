@@ -60,12 +60,21 @@ public class BootstrapIngestionTests : IDisposable
 
         return new BootstrapIngestionService(
             sourceRepo,
-            factRepo,
+            new FakeDeduplicationService(factRepo),
             harvesters,
             new IdentityChunker(),
             new SimpleExtractionService(),
             new FakeEmbeddingService(),
             NullLogger<BootstrapIngestionService>.Instance);
+    }
+
+    private sealed class FakeDeduplicationService(IFactRepository facts) : IDeduplicationService
+    {
+        public async Task<DedupResult> IngestAsync(Fact fact, ExtractionMethod method, CancellationToken ct = default)
+        {
+            var id = await facts.AddAsync(fact, ct);
+            return new DedupResult(id, false, 0);
+        }
     }
 
     private sealed class IdentityChunker : IChunker

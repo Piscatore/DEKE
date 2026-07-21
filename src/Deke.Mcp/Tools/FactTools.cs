@@ -11,7 +11,7 @@ public class FactTools
 {
     [McpServerTool(Name = "add_fact"), Description("Add a new fact to the knowledge base")]
     public static async Task<string> AddFact(
-        IFactRepository factRepository,
+        IDeduplicationService dedup,
         IEmbeddingService embeddingService,
         [Description("The fact content text")] string content,
         [Description("The knowledge domain this fact belongs to")] string domain,
@@ -28,9 +28,11 @@ public class FactTools
             Confidence = confidence
         };
 
-        var id = await factRepository.AddAsync(fact, ct);
+        var result = await dedup.IngestAsync(fact, ExtractionMethod.ManualApi, ct);
 
-        return $"Fact added successfully.\nID: {id}\nDomain: {domain}\nConfidence: {confidence:F2}";
+        return result.WasDuplicate
+            ? $"Fact matched an existing entry (duplicate).\nID: {result.FactId}\nDomain: {domain}"
+            : $"Fact added successfully.\nID: {result.FactId}\nDomain: {domain}\nConfidence: {confidence:F2}";
     }
 
     [McpServerTool(Name = "get_fact"), Description("Get a specific fact by its ID")]

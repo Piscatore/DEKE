@@ -16,6 +16,7 @@ var connectionString = builder.Configuration.GetConnectionString("Deke")
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
 builder.Services.AddDekeHarvesters();
+builder.Services.AddDekeDedup(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
 
 // PatternDiscoveryService summarizes fact clusters via the same keyed IChatClient
@@ -44,6 +45,8 @@ builder.Services.AddHostedService<SourceMonitorService>();
 builder.Services.AddHostedService<PatternDiscoveryService>();
 builder.Services.AddHostedService<LearningCycleService>();
 builder.Services.AddHostedService<PeerHealthCheckService>();
+builder.Services.AddHostedService<SimilarityDedupService>();
+builder.Services.AddHostedService<SemanticDedupService>();
 
 var host = builder.Build();
 host.Run();
