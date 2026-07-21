@@ -64,10 +64,12 @@ public class SourceRepository : ISourceRepository
             """
             INSERT INTO sources (id, url, domain, name, type, check_interval,
                 last_checked_at, last_changed_at, content_hash, credibility,
-                is_active, created_at, metadata)
+                is_active, created_at, metadata, source_tier, independence_fingerprint,
+                last_verified_at)
             VALUES (@Id, @Url, @Domain, @Name, @Type, @CheckInterval,
                 @LastCheckedAt, @LastChangedAt, @ContentHash, @Credibility,
-                @IsActive, @CreatedAt, @Metadata)
+                @IsActive, @CreatedAt, @Metadata, @SourceTier, @IndependenceFingerprint,
+                @LastVerifiedAt)
             """,
             source);
         return source.Id;
@@ -89,7 +91,10 @@ public class SourceRepository : ISourceRepository
                 content_hash = @ContentHash,
                 credibility = @Credibility,
                 is_active = @IsActive,
-                metadata = @Metadata
+                metadata = @Metadata,
+                source_tier = @SourceTier,
+                independence_fingerprint = @IndependenceFingerprint,
+                last_verified_at = @LastVerifiedAt
             WHERE id = @Id
             """,
             source);

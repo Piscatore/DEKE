@@ -35,6 +35,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFactRelationRepository, FactRelationRepository>();
         services.AddScoped<ILearningLogRepository, LearningLogRepository>();
         services.AddScoped<IInteractionLogRepository, InteractionLogRepository>();
+        services.AddScoped<IFactProvenanceRepository, FactProvenanceRepository>();
+        services.AddScoped<IFactVersionRepository, FactVersionRepository>();
+        services.AddScoped<IDomainTrustPolicyRepository, DomainTrustPolicyRepository>();
 
         return services;
     }

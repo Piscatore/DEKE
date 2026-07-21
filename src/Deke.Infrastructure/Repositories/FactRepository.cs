@@ -16,7 +16,8 @@ public class FactRepository : IFactRepository
         """
         id, content, domain, confidence, source_id, related_fact_ids,
         entities, metadata, created_at, updated_at, is_outdated, outdated_reason,
-        valid_from, valid_until
+        valid_from, valid_until, corroboration_count, last_verified_at,
+        contradiction_flag, trust_state
         """;
 
     private const string SelectAllColumns = SelectColumnsNoEmbedding + ", embedding";
@@ -86,10 +87,12 @@ public class FactRepository : IFactRepository
             """
             INSERT INTO facts (id, content, domain, embedding, confidence, source_id,
                 related_fact_ids, entities, metadata, created_at, updated_at,
-                is_outdated, outdated_reason, valid_from, valid_until)
+                is_outdated, outdated_reason, valid_from, valid_until,
+                corroboration_count, last_verified_at, contradiction_flag, trust_state)
             VALUES (@Id, @Content, @Domain, @Embedding::vector, @Confidence, @SourceId,
                 @RelatedFactIds, @Entities, @Metadata, @CreatedAt, @UpdatedAt,
-                @IsOutdated, @OutdatedReason, @ValidFrom, @ValidUntil)
+                @IsOutdated, @OutdatedReason, @ValidFrom, @ValidUntil,
+                @CorroborationCount, @LastVerifiedAt, @ContradictionFlag, @TrustState)
             """,
             new
             {
@@ -107,7 +110,11 @@ public class FactRepository : IFactRepository
                 fact.IsOutdated,
                 fact.OutdatedReason,
                 fact.ValidFrom,
-                fact.ValidUntil
+                fact.ValidUntil,
+                fact.CorroborationCount,
+                fact.LastVerifiedAt,
+                fact.ContradictionFlag,
+                fact.TrustState
             });
         return fact.Id;
     }
@@ -132,7 +139,11 @@ public class FactRepository : IFactRepository
                 is_outdated = @IsOutdated,
                 outdated_reason = @OutdatedReason,
                 valid_from = @ValidFrom,
-                valid_until = @ValidUntil
+                valid_until = @ValidUntil,
+                corroboration_count = @CorroborationCount,
+                last_verified_at = @LastVerifiedAt,
+                contradiction_flag = @ContradictionFlag,
+                trust_state = @TrustState
             WHERE id = @Id
             """,
             new
@@ -150,7 +161,11 @@ public class FactRepository : IFactRepository
                 fact.IsOutdated,
                 fact.OutdatedReason,
                 fact.ValidFrom,
-                fact.ValidUntil
+                fact.ValidUntil,
+                fact.CorroborationCount,
+                fact.LastVerifiedAt,
+                fact.ContradictionFlag,
+                fact.TrustState
             });
     }
 

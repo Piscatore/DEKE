@@ -17,6 +17,9 @@ public class Source
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public Dictionary<string, JsonElement> Metadata { get; set; } = [];
+    public SourceTier SourceTier { get; set; } = SourceTier.Unverified;
+    public string? IndependenceFingerprint { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
 
     // Navigation
     public List<Fact> Facts { get; set; } = [];
@@ -33,4 +36,12 @@ public enum SourceType
     Api,
     Manual,
     File
+}
+
+public enum SourceTier
+{
+    Primary,
+    Secondary,
+    Aggregated,
+    Unverified
 }

@@ -27,6 +27,9 @@ CREATE TABLE sources (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     metadata JSONB DEFAULT '{}',
+    source_tier VARCHAR(20) NOT NULL DEFAULT 'Unverified',
+    independence_fingerprint VARCHAR(64),
+    last_verified_at TIMESTAMPTZ,
     CONSTRAINT sources_url_unique UNIQUE (url)
 );
 
@@ -50,7 +53,11 @@ CREATE TABLE facts (
     is_outdated BOOLEAN NOT NULL DEFAULT FALSE,
     outdated_reason VARCHAR(200),
     valid_from TIMESTAMPTZ,
-    valid_until TIMESTAMPTZ
+    valid_until TIMESTAMPTZ,
+    corroboration_count INT NOT NULL DEFAULT 0,
+    last_verified_at TIMESTAMPTZ,
+    contradiction_flag BOOLEAN NOT NULL DEFAULT FALSE,
+    trust_state VARCHAR(20) NOT NULL DEFAULT 'Unscored'
 );
 
 CREATE INDEX idx_facts_embedding ON facts
@@ -175,3 +182,40 @@ CREATE TABLE federation_peers (
 );
 
 CREATE INDEX idx_federation_peers_healthy ON federation_peers(is_healthy) WHERE is_healthy = TRUE;
+
+-- Fact provenance: one-to-many link between facts and the sources that assert them
+CREATE TABLE fact_provenance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fact_id UUID NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+    source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+    extracted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    extraction_method VARCHAR(30) NOT NULL,
+    extraction_confidence REAL NOT NULL DEFAULT 1.0,
+    CONSTRAINT fact_provenance_unique UNIQUE (fact_id, source_id)
+);
+
+CREATE INDEX idx_fact_provenance_fact ON fact_provenance(fact_id);
+CREATE INDEX idx_fact_provenance_source ON fact_provenance(source_id);
+
+-- Fact version: immutable change history, "what did we believe on date X"
+CREATE TABLE fact_version (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fact_id UUID NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+    content_snapshot TEXT NOT NULL,
+    embedding_snapshot vector(384),
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    change_reason VARCHAR(30) NOT NULL
+);
+
+CREATE INDEX idx_fact_version_fact ON fact_version(fact_id, changed_at DESC);
+
+-- Domain trust policy: per-domain configuration governing provenance strictness
+CREATE TABLE domain_trust_policy (
+    domain VARCHAR(100) PRIMARY KEY,
+    require_primary_source BOOLEAN NOT NULL DEFAULT FALSE,
+    min_corroboration INT NOT NULL DEFAULT 0,
+    auto_accept_tiers JSONB NOT NULL DEFAULT '[]',
+    flag_for_review_tiers JSONB NOT NULL DEFAULT '[]',
+    temporal_validity_required BOOLEAN NOT NULL DEFAULT FALSE,
+    min_confidence_score REAL NOT NULL DEFAULT 0.0
+);

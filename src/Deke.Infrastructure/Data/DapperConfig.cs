@@ -33,6 +33,9 @@ public static class DapperConfig
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<PeerDomainInfo>>());
         SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<string>>());
 
+        // Trust policy type handlers
+        SqlMapper.AddTypeHandler(new JsonbTypeHandler<List<SourceTier>>());
+
         // Register UUID[] and REAL[] type handlers
         SqlMapper.AddTypeHandler(new GuidArrayTypeHandler());
         SqlMapper.AddTypeHandler(new FloatArrayTypeHandler());
@@ -42,6 +45,10 @@ public static class DapperConfig
         SqlMapper.AddTypeHandler(new EnumTypeHandler<PatternType>());
         SqlMapper.AddTypeHandler(new EnumTypeHandler<ConfidenceBand>());
         SqlMapper.AddTypeHandler(new EnumTypeHandler<Stakes>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<SourceTier>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<TrustState>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<ExtractionMethod>());
+        SqlMapper.AddTypeHandler(new EnumTypeHandler<ChangeReason>());
 
         // Dapper: map underscore columns to PascalCase properties
         DefaultTypeMap.MatchNamesWithUnderscores = true;

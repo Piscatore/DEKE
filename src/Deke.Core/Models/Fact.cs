@@ -19,6 +19,10 @@ public class Fact
     public string? OutdatedReason { get; set; }
     public DateTimeOffset? ValidFrom { get; set; }
     public DateTimeOffset? ValidUntil { get; set; }
+    public int CorroborationCount { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
+    public bool ContradictionFlag { get; set; }
+    public TrustState TrustState { get; set; } = TrustState.Unscored;
 
     // Navigation
     public Source? Source { get; set; }
@@ -28,4 +32,13 @@ public record ExtractedEntity
 {
     public required string Type { get; init; }
     public required string Value { get; init; }
+}
+
+public enum TrustState
+{
+    Unscored,
+    Accepted,
+    Flagged,
+    Contested,
+    Rejected
 }

@@ -42,15 +42,14 @@ ingestion, interaction logging) are done.
 
 ```
 NOW (no unmet dependencies, parallelizable)
-  P1-1  trust & provenance schema      ← first priority
   RES-1 vectorless RAG research        ← parallel, read-only
   HYG-1 doc-sync sweep
   HYG-2 missing REST endpoints         ← done 2026-07-14
   HYG-3 Api/Mcp test coverage
 
-NEXT (dependencies above)
-  P1-1 ──→ R2   five-level deduplication
-  P1-1 ──→ P1-2 quality pipeline
+NEXT (dependencies above; P1-1 done 2026-07-21, so R2/P1-2 are now available)
+  R2    five-level deduplication       ← unblocked, depends only on P1-1
+  P1-2  quality pipeline               ← unblocked, depends only on P1-1
   RES-1 ─→ (spawned design packet: hybrid retrieval)
   R4   cross-encoder re-ranking        (R1 done; consult RES-1 findings)
   R5   PDF + Markdown ingestion        (R1 done)
@@ -69,17 +68,19 @@ TRIGGER-GATED (sized only when the trigger fires)
 
 ## Sized Packets — Ready Now
 
-### P1-1: Trust and provenance schema — first priority
+### P1-1: Trust and provenance schema — done (2026-07-21)
 
 - **Goal:** Implement the planned provenance/trust schema (planned tables plus
   source/fact column additions, [specification.md](architecture/specification.md)
-  Planned Tables section) before more data accumulates.
+  Planned Tables section — now folded into Current Tables, see Status below)
+  before more data accumulates.
 - **Why first:** the 2026-03 decision log calls P1-1 the critical path —
   schema changes after data are expensive, and bootstrap ingestion has
   already run.
 - **Depends on:** nothing. **Unblocks:** R2, P1-2.
-- **Context budget:** specification.md Planned Tables / Planned Source & Fact
-  Additions; `init.sql`; PROJECT-MAP: Data Access & Type Handlers,
+- **Context budget (as originally scoped):** specification.md Planned Tables /
+  Planned Source & Fact Additions (sections no longer exist post-completion —
+  see specification.md Current Tables); `init.sql`; PROJECT-MAP: Data Access & Type Handlers,
   Repositories, Trust.
 - **Tool budget:** serena, roslyn, postgres-mcp, dotnet SDK, git.
 - **Tier:** strongest available, extended thinking (schema decisions are
@@ -87,6 +88,21 @@ TRIGGER-GATED (sized only when the trigger fires)
 - **Done when:** `init.sql` and models/repositories updated and applied;
   build + tests pass; specification.md's planned-schema sections moved to
   current (via doc-maintainer).
+- **Status:** Done 2026-07-21. Shipped with a reconciled scope, not the
+  literal 2026-03 plan text: the plan predated the 2026-04 trust-framework
+  simplification and still listed `confidence_score`/`credibility_score` as
+  new columns duplicating the already-shipped `confidence`/`credibility`.
+  Presented to Mikael via AskUserQuestion; he chose to reconcile (see
+  [decisions.md](architecture/decisions.md) 2026-07-21 entry). Delivered: 3
+  new tables (`fact_provenance`, `fact_version`, `domain_trust_policy`); new
+  columns `source_tier`/`independence_fingerprint`/`last_verified_at` on
+  `sources` and `corroboration_count`/`last_verified_at`/
+  `contradiction_flag`/`trust_state` on `facts`; matching C# models, 3 new
+  repository interfaces + Dapper implementations, and DI/type-handler
+  registrations. Schema-only — no corroboration-counting, contradiction-
+  detection, or trust_state transition logic (that's P1-2). Verified: build
+  green, 80/80 tests passing, live-applied to the running `deke-postgres`
+  container. Unblocks R2 and P1-2, now moved to the NEXT lane.
 
 ### RES-1: Vectorless RAG and hybrid retrieval research (ADR-0010)
 
@@ -335,3 +351,4 @@ beats speculative sizing.
 | 2026-07-14 | Overhaul design packets | `Llm/` retired onto `IChatClient` (ADR-0007); API-key fail-fast (ADR-0008); fact-only domains visible over MCP (ADR-0009); glossary ENFORCED via CI lint; MVP recognized as delivered in full. |
 | 2026-07-14 | Roadmap rebuilt | This file: all planned work re-expressed as sized packets in a DAG (overhaul packet OP-011, exit criterion 7). |
 | 2026-07-14 | Overhaul dissolved | All 8 exit criteria passed (OP-012). `overhaul/` archived in place — kept for history, excluded from agent context budgets. Repo tagged `overhaul-complete` (overhaul packet OP-013). |
+| 2026-07-21 | P1-1 done | Trust and provenance schema, reconciled scope (see [decisions.md](architecture/decisions.md) 2026-07-21 entry): 3 new tables (`fact_provenance`, `fact_version`, `domain_trust_policy`), new trust columns on `sources`/`facts`, matching models/repositories/DI. Schema only — algorithms deferred to P1-2. Build green, 80/80 tests passing. R2 and P1-2 unblocked. |

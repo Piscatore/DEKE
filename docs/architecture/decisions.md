@@ -87,6 +87,35 @@ Decisions made while validating the advisory pipeline against a live Anthropic c
 |------|----------|-----------|
 | 2026-07-07 | Pin `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.Abstractions` to 10.3.0, and `OllamaSharp` to 5.3.0, rather than the latest of each | `Anthropic.SDK` 5.10.0 (the latest release and the only version implementing `IChatClient`) was compiled against `Microsoft.Extensions.AI.Abstractions` 10.3.0 and calls `HostedMcpServerTool.AuthorizationToken`, a member `Microsoft.Extensions.AI` removed by 10.4.1. Running against 10.7.0 threw a runtime `MissingMethodException` on every model call -- invisible to unit tests (fake `IChatClient`), caught only by a live Anthropic call. `OllamaSharp` 5.4.x floors at `Microsoft.Extensions.AI` 10.4.1 (incompatible with the required 10.3.0), so it was downgraded to 5.3.0, whose floor is <= 10.3.0. Net: `Anthropic.SDK` 5.10.0, `OllamaSharp` 5.3.0, and `Microsoft.Extensions.AI` 10.3.0 coexist. Revisit when a newer `Anthropic.SDK` targets `Microsoft.Extensions.AI` >= 10.4. |
 
+### 2026-07-21 P1-1 Trust and Provenance Schema Reconciliation
+
+P1-1's original 2026-03 plan (specification.md's former "Planned Tables (P1-1)" /
+"Planned Source Table Additions" / "Planned Fact Table Additions" sections) predates
+the 2026-04 Product Checkpoint's "Simplify trust framework to source credibility +
+fact confidence + temporal validity" decision (above). By 2026-07-21 that plan had
+drifted: it still listed `confidence_score` and `credibility_score` as new columns,
+and re-listed `valid_from`/`valid_until` as "planned" -- all four already shipped
+under the 2026-04 simplification (`confidence` on facts, `credibility` on sources,
+`valid_from`/`valid_until` on facts, all live in `init.sql`/`Fact.cs`/`Source.cs`
+before this work started). Implementing the literal 2026-03 text would have
+duplicated live columns under new names.
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-07-21 | Reconcile P1-1 to skip columns that duplicate already-shipped trust fields | Presented to Mikael via AskUserQuestion: implement the plan as originally written (re-adding `confidence_score`/`credibility_score` alongside the existing `confidence`/`credibility`), or reconcile (implement only genuinely new schema, treating existing `confidence`/`credibility`/`valid_from`/`valid_until` as already satisfying their `_score`-suffixed planned counterparts). Mikael chose reconcile. |
+| 2026-07-21 | Ship 3 new tables (`fact_provenance`, `fact_version`, `domain_trust_policy`) plus only the genuinely new source/fact columns | New on `sources`: `source_tier`, `independence_fingerprint`, `last_verified_at` (`credibility_score` skipped -- duplicate of `credibility`). New on `facts`: `corroboration_count`, `last_verified_at`, `contradiction_flag`, `trust_state` (`confidence_score` skipped -- duplicate of `confidence`; `valid_from`/`valid_until` skipped as "new" since both already existed and were simply undocumented in specification.md's Current Tables section until this reconciliation). |
+| 2026-07-21 | Keep P1-1 schema-only; defer corroboration-counting, contradiction-detection, and trust_state transition logic to P1-2 | The new columns and tables (`corroboration_count`, `contradiction_flag`, `trust_state`, `domain_trust_policy`'s policy fields) are storage and configuration only in this packet -- no code populates or transitions them yet. This matches [ROADMAP.md](../ROADMAP.md)'s P1-1/P1-2 split: P1-1 is schema, P1-2 is the quality-pipeline logic that reads and writes it. |
+
+Verified: build green, 80/80 tests passing, schema live-applied to the running
+`deke-postgres` container. See [ROADMAP.md](../ROADMAP.md) P1-1 for closure status
+and [PROJECT-MAP.md](../PROJECT-MAP.md) Repositories / Data Access & Type Handlers
+for the new repository and type-handler entries.
+
+**Separately discovered, not part of this reconciliation:** the live `deke-postgres`
+container (running ~2 weeks at time of discovery) is missing the `interaction_logs`
+table that `init.sql` has always defined -- pre-existing schema drift, unrelated to
+P1-1, predating this work. Not fixed here; flagged for follow-up.
+
 ---
 
 ## Guardrails and Risk Analysis
