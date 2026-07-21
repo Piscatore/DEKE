@@ -6,6 +6,7 @@ using Deke.Infrastructure.Embeddings;
 using Deke.Infrastructure.Extraction;
 using Deke.Infrastructure.Federation;
 using Deke.Infrastructure.Harvesters;
+using Deke.Infrastructure.Ingestion;
 using Deke.Infrastructure.Repositories;
 using Deke.Infrastructure.Trust;
 using Microsoft.Extensions.AI;
@@ -54,6 +55,18 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(config);
         services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
         services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>, OnnxEmbeddingGenerator>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddDekeDedup(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<DedupConfig>(configuration.GetSection("Dedup"));
+
+        services.AddSingleton<IContentHasher, ContentHasher>();
+        services.AddSingleton<ISimHasher, SimHasher>();
+        services.AddScoped<IDeduplicationService, DeduplicationService>();
 
         return services;
     }
