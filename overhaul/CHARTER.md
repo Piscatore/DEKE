@@ -1,9 +1,9 @@
 # DEKE Overhaul — Charter
 
-> **Status: TEMPORARY SUBPROJECT.** Part of `/overhaul`, which is scaffolding,
-> not architecture. See `OVERHAUL-SKETCH-v0.2.md` for the full plan and
-> `STATE.md` for current progress. This charter is archived, not deleted,
-> when the subproject dissolves.
+> **Status: ARCHIVED (2026-07-14, OP-013).** The subproject dissolved after
+> all 8 exit criteria passed (OP-012, see `STATE.md`). This charter is kept
+> for history per the original plan — `/overhaul` was scaffolding, not
+> architecture. Live docs: `/docs`.
 
 ## Goal
 

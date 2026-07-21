@@ -1,11 +1,32 @@
 # STATE.md — Overhaul Baton
 
-> Read this first, every session. Append a new entry (newest on top) when
-> you finish a packet. Keep entries ≤10 lines. This file plus the artifacts
-> in `/docs` are the only cross-session memory — don't assume anything else
-> carries over between sessions.
+> **ARCHIVED (2026-07-14, OP-013).** The Overhaul subproject is dissolved —
+> all 8 exit criteria passed (OP-012). This directory is kept for history
+> only; do **not** load it into agent context budgets. Live project
+> documentation lives in `/docs` (start at `docs/INDEX.md`; planned work:
+> `docs/ROADMAP.md`).
+>
+> Original directive (retired): read this first every session, append an
+> entry per finished packet, newest on top, ≤10 lines.
 
 ---
+
+## 2026-07-14 — OP-013: dissolution — archived, tagged, closed
+
+- Pre-flight: `PARKING-LOT.md` fully dispositioned (15/15 entries marked);
+  nothing undecided rode into dissolution.
+- Archive banners added: this file's header + `CHARTER.md`'s status line,
+  both flipped to ARCHIVED (2026-07-14, OP-013) with pointers to `/docs`.
+- `docs/ROADMAP.md` doc pass: HYG-2 marked done (2026-07-14, commit
+  `150edb6`, OP-012 exit-criterion-8 acceptance test); dissolution milestone
+  row appended to the history table.
+- Decisions (Mikael, via AskUserQuestion): archive in place (not moved —
+  ~15 inbound doc references keep resolving); tag `overhaul-complete`
+  (annotated); push to `origin`.
+- **The Overhaul subproject is closed.** This is the last entry — the
+  read-every-session directive is retired along with it. Agents: orient
+  from `docs/INDEX.md`; plan work from `docs/ROADMAP.md`'s packet DAG (NOW
+  lane: P1-1, RES-1, HYG-1, HYG-3).
 
 ## 2026-07-14 — OP-012: review packet — all 8 exit criteria PASS
 

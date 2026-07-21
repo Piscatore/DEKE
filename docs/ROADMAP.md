@@ -45,7 +45,7 @@ NOW (no unmet dependencies, parallelizable)
   P1-1  trust & provenance schema      ← first priority
   RES-1 vectorless RAG research        ← parallel, read-only
   HYG-1 doc-sync sweep
-  HYG-2 missing REST endpoints
+  HYG-2 missing REST endpoints         ← done 2026-07-14
   HYG-3 Api/Mcp test coverage
 
 NEXT (dependencies above)
@@ -123,7 +123,7 @@ TRIGGER-GATED (sized only when the trigger fires)
 - **Tier:** Sonnet-class, default.
 - **Done when:** each item grep-verifiably fixed; glossary lint passes.
 
-### HYG-2: Missing REST endpoints
+### HYG-2: Missing REST endpoints — done (2026-07-14)
 
 - **Goal:** Implement the three endpoints specification.md documents as
   current scope but which do not exist: `PUT /api/facts/{id}`,
@@ -136,6 +136,11 @@ TRIGGER-GATED (sized only when the trigger fires)
 - **Tier:** Sonnet-class, default.
 - **Done when:** endpoints implemented with tests; live-verified; spec
   already documents them, so no doc change expected.
+- **Status:** Done 2026-07-14. Served as the acceptance test for overhaul
+  packet OP-012's exit criterion 8: a fresh subagent, given only `docs/` and
+  this packet, shipped all three endpoints with 12 new tests (80/80
+  passing), live-verified. Commit `150edb6`
+  ("feat(api): add PUT/DELETE fact + PUT source endpoints").
 
 ### HYG-3: Test coverage — Deke.Api, Deke.Mcp, federation delegation
 
@@ -329,3 +334,4 @@ beats speculative sizing.
 | 2026-07-03 | Advisory Pipeline MVP | Contracts, 7-stage pipeline, Software Product Advisor adapter, GetDomainAdvice MCP tool, `advisory_interactions` audit table. |
 | 2026-07-14 | Overhaul design packets | `Llm/` retired onto `IChatClient` (ADR-0007); API-key fail-fast (ADR-0008); fact-only domains visible over MCP (ADR-0009); glossary ENFORCED via CI lint; MVP recognized as delivered in full. |
 | 2026-07-14 | Roadmap rebuilt | This file: all planned work re-expressed as sized packets in a DAG (overhaul packet OP-011, exit criterion 7). |
+| 2026-07-14 | Overhaul dissolved | All 8 exit criteria passed (OP-012). `overhaul/` archived in place — kept for history, excluded from agent context budgets. Repo tagged `overhaul-complete` (overhaul packet OP-013). |
