@@ -57,7 +57,12 @@ CREATE TABLE facts (
     corroboration_count INT NOT NULL DEFAULT 0,
     last_verified_at TIMESTAMPTZ,
     contradiction_flag BOOLEAN NOT NULL DEFAULT FALSE,
-    trust_state VARCHAR(20) NOT NULL DEFAULT 'Unscored'
+    trust_state VARCHAR(20) NOT NULL DEFAULT 'Unscored',
+    -- R2 deduplication (levels 1-5)
+    content_hash VARCHAR(64),
+    normalized_hash VARCHAR(64),
+    similarity_hash BIGINT,
+    duplicate_of UUID REFERENCES facts(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_facts_embedding ON facts
@@ -67,6 +72,12 @@ CREATE INDEX idx_facts_domain ON facts(domain);
 CREATE INDEX idx_facts_source ON facts(source_id);
 CREATE INDEX idx_facts_created ON facts(created_at DESC);
 CREATE INDEX idx_facts_active ON facts(domain, is_outdated) WHERE is_outdated = FALSE;
+
+-- R2 dedup: exact-match lookup (levels 2-3) and per-domain uniqueness guard
+CREATE INDEX idx_facts_content_hash ON facts(content_hash);
+CREATE UNIQUE INDEX idx_facts_domain_normhash ON facts(domain, normalized_hash);
+-- R2 dedup: async level-4 candidate scan (facts without a similarity hash yet)
+CREATE INDEX idx_facts_pending_simhash ON facts(id) WHERE similarity_hash IS NULL;
 
 -- Terms: Domain-specific terminology
 CREATE TABLE terms (
