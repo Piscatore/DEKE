@@ -49,7 +49,7 @@ public class SemanticDedupService : BackgroundService
         }
     }
 
-    private async Task RunCycleAsync(CancellationToken ct)
+    internal async Task RunCycleAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
         var factRepo = scope.ServiceProvider.GetRequiredService<IFactRepository>();

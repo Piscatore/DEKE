@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Deke.Infrastructure\Deke.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Deke.Tests" />
+  </ItemGroup>
+
 </Project>
