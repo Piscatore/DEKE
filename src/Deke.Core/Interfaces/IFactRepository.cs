@@ -19,6 +19,15 @@ public interface IFactRepository
     Task UpdateAsync(Fact fact, CancellationToken ct = default);
     Task MarkOutdatedAsync(Guid id, string reason, CancellationToken ct = default);
 
+    // Deduplication (R2)
+    Task<Fact?> GetByContentHashAsync(string contentHash, string domain, CancellationToken ct = default);
+    Task<Fact?> GetByNormalizedHashAsync(string normalizedHash, string domain, CancellationToken ct = default);
+    Task IncrementCorroborationAsync(Guid id, CancellationToken ct = default);
+    Task SetDuplicateOfAsync(Guid id, Guid canonicalId, CancellationToken ct = default);
+    Task SetSimilarityHashAsync(Guid id, long similarityHash, CancellationToken ct = default);
+    Task<List<Fact>> GetPendingSimilarityAsync(int limit, CancellationToken ct = default);
+    Task<List<Fact>> GetPendingSemanticAsync(int limit, CancellationToken ct = default);
+
     Task<int> GetCountAsync(string domain, CancellationToken ct = default);
     Task<List<Fact>> GetRecentAsync(string domain, int days, int limit = 100, CancellationToken ct = default);
     Task<List<Fact>> GetWithoutRelationsAsync(string domain, int limit = 50, CancellationToken ct = default);

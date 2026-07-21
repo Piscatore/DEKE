@@ -15,5 +15,7 @@ public enum ExtractionMethod
     RssHarvest,
     WebHarvest,
     ManualApi,
-    LlmExtract
+    LlmExtract,
+    FileHarvest,
+    Corroboration
 }
