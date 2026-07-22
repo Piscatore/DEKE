@@ -213,6 +213,89 @@ public class ApiEndpointTests
         Assert.Equal(TimeSpan.FromHours(6), ok.Value.CheckInterval);
     }
 
+    // ---- GET /api/review-queue ----
+
+    [Fact]
+    public async Task GetReviewQueue_ReturnsOnlyFlaggedAndContestedFacts()
+    {
+        var flagged = NewFact("flagged content");
+        flagged.TrustState = TrustState.Flagged;
+        var contested = NewFact("contested content");
+        contested.TrustState = TrustState.Contested;
+        var accepted = NewFact("accepted content");
+        accepted.TrustState = TrustState.Accepted;
+        var repo = new FakeFactRepository(flagged, contested, accepted);
+
+        var result = await ReviewQueueEndpoints.GetReviewQueue(null, 100, repo, CancellationToken.None);
+
+        var ok = Assert.IsType<Ok<List<Fact>>>(result);
+        Assert.Equal(2, ok.Value!.Count);
+        Assert.Contains(ok.Value, f => f.Id == flagged.Id);
+        Assert.Contains(ok.Value, f => f.Id == contested.Id);
+    }
+
+    [Fact]
+    public async Task GetReviewQueue_FiltersByDomain()
+    {
+        var fishing = NewFact("fishing content");
+        fishing.TrustState = TrustState.Flagged;
+        var hiking = NewFact("hiking content");
+        hiking.TrustState = TrustState.Flagged;
+        hiking.Domain = "hiking";
+        var repo = new FakeFactRepository(fishing, hiking);
+
+        var result = await ReviewQueueEndpoints.GetReviewQueue("hiking", 100, repo, CancellationToken.None);
+
+        var ok = Assert.IsType<Ok<List<Fact>>>(result);
+        Assert.Single(ok.Value!);
+        Assert.Equal(hiking.Id, ok.Value![0].Id);
+    }
+
+    [Fact]
+    public async Task GetReviewQueue_ClampsLimitToMaximum()
+    {
+        var repo = new FakeFactRepository();
+
+        await ReviewQueueEndpoints.GetReviewQueue(null, 5000, repo, CancellationToken.None);
+
+        Assert.Equal(500, repo.LastReviewQueueLimit);
+    }
+
+    // ---- GET/PUT /api/domains/{domain}/trust-policy ----
+
+    [Fact]
+    public async Task GetTrustPolicy_ReturnsNotFound_WhenUnconfigured()
+    {
+        var repo = new FakeDomainTrustPolicyRepository();
+
+        var result = await DomainTrustPolicyEndpoints.GetTrustPolicy("fishing", repo, CancellationToken.None);
+
+        Assert.IsType<NotFound>(result);
+    }
+
+    [Fact]
+    public async Task UpdateTrustPolicy_ThenGetTrustPolicy_RoundTrips()
+    {
+        var repo = new FakeDomainTrustPolicyRepository();
+        var request = new UpdateTrustPolicyRequest(
+            RequirePrimarySource: true,
+            MinCorroboration: 2,
+            AutoAcceptTiers: [SourceTier.Primary],
+            FlagForReviewTiers: [SourceTier.Unverified],
+            TemporalValidityRequired: true,
+            MinConfidenceScore: 0.7f);
+
+        var putResult = await DomainTrustPolicyEndpoints.UpdateTrustPolicy("fishing", request, repo, CancellationToken.None);
+        var getResult = await DomainTrustPolicyEndpoints.GetTrustPolicy("fishing", repo, CancellationToken.None);
+
+        var putOk = Assert.IsType<Ok<DomainTrustPolicy>>(putResult);
+        var getOk = Assert.IsType<Ok<DomainTrustPolicy>>(getResult);
+        Assert.Equal("fishing", putOk.Value!.Domain);
+        Assert.Equal(2, getOk.Value!.MinCorroboration);
+        Assert.Equal(0.7f, getOk.Value.MinConfidenceScore);
+        Assert.Contains(SourceTier.Unverified, getOk.Value.FlagForReviewTiers);
+    }
+
     // ---- helpers & fakes ----
 
     private static Fact NewFact(string content, float confidence = 1.0f) => new()
@@ -287,7 +370,18 @@ public class ApiEndpointTests
         public Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
         public Task MarkContradictedAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
-        public Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public int? LastReviewQueueLimit { get; private set; }
+
+        public Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default)
+        {
+            LastReviewQueueLimit = limit;
+            return Task.FromResult(Facts.Values
+                .Where(f => f.TrustState is TrustState.Flagged or TrustState.Contested
+                    && (domain is null || f.Domain == domain))
+                .OrderByDescending(f => f.CreatedAt)
+                .Take(limit)
+                .ToList());
+        }
         public Task<List<DomainStats>> GetDomainStatsAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public Task<Fact?> GetByContentHashAsync(string contentHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<Fact?> GetByNormalizedHashAsync(string normalizedHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();
@@ -327,5 +421,22 @@ public class ApiEndpointTests
         public Task<List<Source>> GetAllAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public Task DeactivateAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
         public Task DeleteAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+    }
+
+    private sealed class FakeDomainTrustPolicyRepository : IDomainTrustPolicyRepository
+    {
+        private readonly Dictionary<string, DomainTrustPolicy> _policies = new();
+
+        public Task<DomainTrustPolicy?> GetByDomainAsync(string domain, CancellationToken ct = default)
+            => Task.FromResult(_policies.GetValueOrDefault(domain));
+
+        public Task<List<DomainTrustPolicy>> GetAllAsync(CancellationToken ct = default)
+            => Task.FromResult(_policies.Values.ToList());
+
+        public Task UpsertAsync(DomainTrustPolicy policy, CancellationToken ct = default)
+        {
+            _policies[policy.Domain] = policy;
+            return Task.CompletedTask;
+        }
     }
 }
