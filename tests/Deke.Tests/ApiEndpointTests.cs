@@ -1,6 +1,7 @@
 ﻿using Deke.Api.Endpoints;
 using Deke.Core.Interfaces;
 using Deke.Core.Models;
+using Deke.Tests.Fakes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -421,22 +422,5 @@ public class ApiEndpointTests
         public Task<List<Source>> GetAllAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public Task DeactivateAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
         public Task DeleteAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
-    }
-
-    private sealed class FakeDomainTrustPolicyRepository : IDomainTrustPolicyRepository
-    {
-        private readonly Dictionary<string, DomainTrustPolicy> _policies = new();
-
-        public Task<DomainTrustPolicy?> GetByDomainAsync(string domain, CancellationToken ct = default)
-            => Task.FromResult(_policies.GetValueOrDefault(domain));
-
-        public Task<List<DomainTrustPolicy>> GetAllAsync(CancellationToken ct = default)
-            => Task.FromResult(_policies.Values.ToList());
-
-        public Task UpsertAsync(DomainTrustPolicy policy, CancellationToken ct = default)
-        {
-            _policies[policy.Domain] = policy;
-            return Task.CompletedTask;
-        }
     }
 }
