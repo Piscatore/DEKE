@@ -121,6 +121,30 @@ indexes (`idx_interaction_logs_created`, `idx_interaction_logs_domain`) were app
 to the live container from `init.sql`'s existing definition -- no code or `init.sql`
 changes needed. All 12 `init.sql` tables now present, verified via `\dt`.
 
+### 2026-07-22 R2 Five-Level Deduplication
+
+R2 implements the five-level dedup pipeline (URL hash -> content hash -> normalized
+hash -> similarity hash -> semantic similarity >= 0.92); levels 1-3 run
+synchronously at ingest, levels 4-5 as async background jobs. Every fact insert
+across the Worker, API, and MCP now routes through a single dedup gateway. The
+notable design decisions -- and one implementation deviation from the R2 packet as
+originally scoped -- are recorded here.
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-07-22 | Use SimHash (a single 64-bit fingerprint) for level-4 near-duplicate detection rather than MinHash | The storage model is one `similarity_hash` column on `facts`. SimHash produces one 64-bit fingerprint that fits a single `BIGINT`, and near-duplicate testing is a cheap XOR + popcount Hamming distance. MinHash would require a multi-value signature plus LSH banding, breaking the single-column storage model for no benefit at DEKE's scale. |
+| 2026-07-22 | Enforce exact-duplicate uniqueness with a per-domain `UNIQUE(domain, normalized_hash)` constraint | A hard DB guard against exact duplicates that also closes the concurrent-insert race between the Worker, API, and MCP paths (paired with `ON CONFLICT DO NOTHING`). Uniqueness is per-domain because the same content string in two domains is two distinct facts with different trust context. Rows with NULL `normalized_hash` (legacy / pre-backfill) are exempt, since Postgres treats NULLs as distinct. |
+| 2026-07-22 | Write provenance on every insert (first sighting and duplicate links), not only on duplicates | Closes the P1-1 gap where `FactProvenanceRepository.AddAsync` had zero callers. Recording a first-sighting provenance row for every accepted fact gives `corroboration_count` a complete provenance graph to count against, instead of one that only materializes once a duplicate arrives. |
+| 2026-07-22 | Resolve duplicates by discard-and-corroborate | Sync L1-L3 hits skip the insert entirely; async L4/L5 hits set `duplicate_of` on the losing row. Both link provenance and, when the sighting comes from a distinct source, increment `corroboration_count`. Same-source re-supply is a no-op -- re-ingesting from one source is not independent corroboration. |
+| 2026-07-22 | Extract an `IDuplicateLinker` abstraction (deviation from the packet plan) | The corroboration-plus-provenance rule is needed identically by the synchronous dedup gateway and by both async (L4/L5) jobs. Centralizing it in one linker avoids triplicating a correctness-sensitive rule across three call sites where the copies could silently drift apart. |
+
+**Scope:** Retroactive dedup backfill of pre-existing facts (the NULL-hash rows the
+`UNIQUE` constraint exempts) was deliberately deferred out of R2. R2 covers
+deduplication on the insert path only; backfilling hashes and de-duplicating
+already-stored facts is separate follow-up work.
+
+Merged to main via PR #31. See [ROADMAP.md](../ROADMAP.md) R2 for closure status.
+
 ---
 
 ## Guardrails and Risk Analysis

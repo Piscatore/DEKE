@@ -48,7 +48,7 @@ NOW (no unmet dependencies, parallelizable)
   HYG-3 Api/Mcp test coverage
 
 NEXT (dependencies above; P1-1 done 2026-07-21, so R2/P1-2 are now available)
-  R2    five-level deduplication       ← unblocked, depends only on P1-1
+  R2    five-level deduplication       ← done 2026-07-22
   P1-2  quality pipeline               ← unblocked, depends only on P1-1
   RES-1 ─→ (spawned design packet: hybrid retrieval)
   R4   cross-encoder re-ranking        (R1 done; consult RES-1 findings)
@@ -175,7 +175,7 @@ TRIGGER-GATED (sized only when the trigger fires)
 
 ## Sized Packets — After Dependencies Land
 
-### R2: Five-level deduplication
+### R2: Five-level deduplication — done (2026-07-22)
 
 - **Goal:** Implement the five-level dedup pipeline (URL hash → content hash
   → normalized hash → similarity hash → semantic similarity ≥ 0.92); levels
@@ -187,6 +187,14 @@ TRIGGER-GATED (sized only when the trigger fires)
 - **Tier:** Sonnet-class, default (design already specified).
 - **Done when:** all five levels active; tests cover each level; background
   jobs scheduled.
+- **Status:** Done 2026-07-22, merged to main via PR #31. All five levels
+  active (L1–L3 sync at ingest, L4–L5 async jobs); every fact insert across
+  Worker, API, and MCP routes through one dedup gateway; per-level test
+  coverage added. See [decisions.md](architecture/decisions.md) 2026-07-22
+  entry for the notable design decisions (SimHash over MinHash, per-domain
+  `UNIQUE(domain, normalized_hash)`, provenance on every insert,
+  discard-and-corroborate, extracted `IDuplicateLinker`). Retroactive backfill
+  of pre-existing NULL-hash facts deferred out of R2.
 
 ### P1-2: Quality pipeline
 
@@ -352,3 +360,4 @@ beats speculative sizing.
 | 2026-07-14 | Roadmap rebuilt | This file: all planned work re-expressed as sized packets in a DAG (overhaul packet OP-011, exit criterion 7). |
 | 2026-07-14 | Overhaul dissolved | All 8 exit criteria passed (OP-012). `overhaul/` archived in place — kept for history, excluded from agent context budgets. Repo tagged `overhaul-complete` (overhaul packet OP-013). |
 | 2026-07-21 | P1-1 done | Trust and provenance schema, reconciled scope (see [decisions.md](architecture/decisions.md) 2026-07-21 entry): 3 new tables (`fact_provenance`, `fact_version`, `domain_trust_policy`), new trust columns on `sources`/`facts`, matching models/repositories/DI. Schema only — algorithms deferred to P1-2. Build green, 80/80 tests passing. R2 and P1-2 unblocked. |
+| 2026-07-22 | R2 done | Five-level deduplication (see [decisions.md](architecture/decisions.md) 2026-07-22 entry): L1–L3 hash checks sync at ingest, L4 SimHash near-dup + L5 semantic ≥ 0.92 async jobs. All fact inserts across Worker/API/MCP routed through one dedup gateway with per-domain `UNIQUE(domain, normalized_hash)`; provenance written on every insert; discard-and-corroborate duplicate resolution via extracted `IDuplicateLinker`. Per-level test coverage added. Merged to main via PR #31. Retroactive backfill deferred. |
