@@ -82,12 +82,13 @@ public sealed class InMemoryFactRepository : IFactRepository
             .OrderByDescending(f => f.CreatedAt).Take(limit).ToList());
 
     public Task<List<FactSearchResult>> SearchAsync(
-        float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f, CancellationToken ct = default)
+        float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f,
+        float? maxSimilarity = null, CancellationToken ct = default)
     {
         var results = _store.Values
             .Where(f => f.Embedding is { Length: > 0 } && (domain is null || f.Domain == domain))
             .Select(f => (Fact: f, Sim: Cosine(embedding, f.Embedding!)))
-            .Where(x => x.Sim > minSimilarity)
+            .Where(x => x.Sim > minSimilarity && (maxSimilarity is null || x.Sim <= maxSimilarity))
             .OrderByDescending(x => x.Sim)
             .Take(limit)
             .Select(x => new FactSearchResult
@@ -122,6 +123,43 @@ public sealed class InMemoryFactRepository : IFactRepository
         }
         return na == 0 || nb == 0 ? 0 : dot / (MathF.Sqrt(na) * MathF.Sqrt(nb));
     }
+
+    public Task<List<Fact>> GetPendingTrustEvaluationAsync(int limit, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values
+            .Where(f => f.TrustState == TrustState.Unscored && f.DuplicateOf is null && !f.IsOutdated)
+            .OrderBy(f => f.CreatedAt).Take(limit).ToList());
+
+    public Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default)
+    {
+        if (_store.TryGetValue(id, out var f))
+            f.TrustState = state;
+        return Task.CompletedTask;
+    }
+
+    public Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values
+            .Where(f => f.TrustState is TrustState.Accepted or TrustState.Flagged
+                && !f.ContradictionFlag && f.Embedding is { Length: > 0 }
+                && f.DuplicateOf is null && !f.IsOutdated)
+            .OrderBy(f => f.CreatedAt).Take(limit).ToList());
+
+    public Task MarkContradictedAsync(Guid id, CancellationToken ct = default)
+    {
+        if (_store.TryGetValue(id, out var f))
+        {
+            f.ContradictionFlag = true;
+            if (f.TrustState != TrustState.Rejected)
+                f.TrustState = TrustState.Contested;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values
+            .Where(f => f.TrustState is TrustState.Flagged or TrustState.Contested
+                && (domain is null || f.Domain == domain)
+                && f.DuplicateOf is null && !f.IsOutdated)
+            .OrderByDescending(f => f.CreatedAt).Take(limit).ToList());
 
     public Task<List<Fact>> GetBySourceAsync(Guid sourceId, CancellationToken ct = default) => throw new NotImplementedException();
     public Task MarkOutdatedAsync(Guid id, string reason, CancellationToken ct = default) => throw new NotImplementedException();

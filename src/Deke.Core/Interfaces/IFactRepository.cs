@@ -13,6 +13,7 @@ public interface IFactRepository
         string? domain,
         int limit = 10,
         float minSimilarity = 0.5f,
+        float? maxSimilarity = null,
         CancellationToken ct = default);
 
     Task<Guid> AddAsync(Fact fact, CancellationToken ct = default);
@@ -27,6 +28,13 @@ public interface IFactRepository
     Task SetSimilarityHashAsync(Guid id, long similarityHash, CancellationToken ct = default);
     Task<List<Fact>> GetPendingSimilarityAsync(int limit, CancellationToken ct = default);
     Task<List<Fact>> GetPendingSemanticAsync(int limit, CancellationToken ct = default);
+
+    // Quality pipeline (P1-2)
+    Task<List<Fact>> GetPendingTrustEvaluationAsync(int limit, CancellationToken ct = default);
+    Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default);
+    Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default);
+    Task MarkContradictedAsync(Guid id, CancellationToken ct = default);
+    Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default);
 
     Task<int> GetCountAsync(string domain, CancellationToken ct = default);
     Task<List<Fact>> GetRecentAsync(string domain, int days, int limit = 100, CancellationToken ct = default);

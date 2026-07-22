@@ -54,6 +54,7 @@ public class FactRepository : IFactRepository
         string? domain,
         int limit = 10,
         float minSimilarity = 0.5f,
+        float? maxSimilarity = null,
         CancellationToken ct = default)
     {
         await using var conn = await _db.CreateConnectionAsync(ct);
@@ -73,10 +74,11 @@ public class FactRepository : IFactRepository
             WHERE f.embedding IS NOT NULL
               {domainClause}
               AND 1 - (f.embedding <=> @vector::vector) > @minSimilarity
+              AND (@maxSimilarity IS NULL OR 1 - (f.embedding <=> @vector::vector) <= @maxSimilarity)
             ORDER BY f.embedding <=> @vector::vector
             LIMIT @limit
             """,
-            new { vector, domain, minSimilarity, limit });
+            new { vector, domain, minSimilarity, maxSimilarity, limit });
         return results.AsList();
     }
 
@@ -340,6 +342,82 @@ public class FactRepository : IFactRepository
             LIMIT @limit
             """,
             new { limit });
+        return results.AsList();
+    }
+
+    // Quality pipeline (P1-2)
+
+    public async Task<List<Fact>> GetPendingTrustEvaluationAsync(int limit, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var results = await conn.QueryAsync<Fact>(
+            $"""
+            SELECT {SelectColumnsNoEmbedding} FROM facts
+            WHERE trust_state = 'Unscored'
+              AND duplicate_of IS NULL
+              AND is_outdated = FALSE
+            ORDER BY created_at
+            LIMIT @limit
+            """,
+            new { limit });
+        return results.AsList();
+    }
+
+    public async Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        await conn.ExecuteAsync(
+            "UPDATE facts SET trust_state = @state, updated_at = @now WHERE id = @id",
+            new { id, state, now = DateTimeOffset.UtcNow });
+    }
+
+    public async Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var results = await conn.QueryAsync<Fact>(
+            $"""
+            SELECT {SelectAllColumns} FROM facts
+            WHERE trust_state IN ('Accepted', 'Flagged')
+              AND NOT contradiction_flag
+              AND embedding IS NOT NULL
+              AND duplicate_of IS NULL
+              AND is_outdated = FALSE
+            ORDER BY created_at
+            LIMIT @limit
+            """,
+            new { limit });
+        return results.AsList();
+    }
+
+    public async Task MarkContradictedAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        await conn.ExecuteAsync(
+            """
+            UPDATE facts
+            SET contradiction_flag = TRUE,
+                trust_state = CASE WHEN trust_state <> 'Rejected' THEN 'Contested' ELSE trust_state END,
+                updated_at = @now
+            WHERE id = @id
+            """,
+            new { id, now = DateTimeOffset.UtcNow });
+    }
+
+    public async Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var domainClause = domain is not null ? "AND domain = @domain" : "";
+        var results = await conn.QueryAsync<Fact>(
+            $"""
+            SELECT {SelectColumnsNoEmbedding} FROM facts
+            WHERE trust_state IN ('Flagged', 'Contested')
+              {domainClause}
+              AND duplicate_of IS NULL
+              AND is_outdated = FALSE
+            ORDER BY created_at DESC
+            LIMIT @limit
+            """,
+            new { domain, limit });
         return results.AsList();
     }
 }

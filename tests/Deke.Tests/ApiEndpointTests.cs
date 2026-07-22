@@ -279,10 +279,15 @@ public class ApiEndpointTests
         public Task<Guid> AddAsync(Fact fact, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetByDomainAsync(string domain, int limit = 100, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetBySourceAsync(Guid sourceId, CancellationToken ct = default) => throw new NotImplementedException();
-        public Task<List<FactSearchResult>> SearchAsync(float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<FactSearchResult>> SearchAsync(float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f, float? maxSimilarity = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<int> GetCountAsync(string domain, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetRecentAsync(string domain, int days, int limit = 100, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetWithoutRelationsAsync(string domain, int limit = 50, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingTrustEvaluationAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task MarkContradictedAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<DomainStats>> GetDomainStatsAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public Task<Fact?> GetByContentHashAsync(string contentHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<Fact?> GetByNormalizedHashAsync(string normalizedHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();

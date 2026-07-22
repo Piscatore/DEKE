@@ -72,6 +72,17 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddDekeQualityPipeline(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<TrustEvaluationConfig>(configuration.GetSection("TrustEvaluation"));
+        services.Configure<ContradictionDetectionConfig>(configuration.GetSection("ContradictionDetection"));
+
+        services.AddScoped<ITrustEvaluator, TrustEvaluator>();
+
+        return services;
+    }
+
     public static IServiceCollection AddDekeHarvesters(this IServiceCollection services)
     {
         services.AddHttpClient();
