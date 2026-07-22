@@ -60,12 +60,21 @@ public class BootstrapIngestionTests : IDisposable
 
         return new BootstrapIngestionService(
             sourceRepo,
-            factRepo,
+            new FakeDeduplicationService(factRepo),
             harvesters,
             new IdentityChunker(),
             new SimpleExtractionService(),
             new FakeEmbeddingService(),
             NullLogger<BootstrapIngestionService>.Instance);
+    }
+
+    private sealed class FakeDeduplicationService(IFactRepository facts) : IDeduplicationService
+    {
+        public async Task<DedupResult> IngestAsync(Fact fact, ExtractionMethod method, CancellationToken ct = default)
+        {
+            var id = await facts.AddAsync(fact, ct);
+            return new DedupResult(id, false, 0);
+        }
     }
 
     private sealed class IdentityChunker : IChunker
@@ -131,5 +140,12 @@ public class BootstrapIngestionTests : IDisposable
         public Task<List<Fact>> GetRecentAsync(string domain, int days, int limit = 100, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetWithoutRelationsAsync(string domain, int limit = 50, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<DomainStats>> GetDomainStatsAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<Fact?> GetByContentHashAsync(string contentHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<Fact?> GetByNormalizedHashAsync(string normalizedHash, string domain, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task IncrementCorroborationAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task SetDuplicateOfAsync(Guid id, Guid canonicalId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task SetSimilarityHashAsync(Guid id, long similarityHash, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingSimilarityAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingSemanticAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
     }
 }

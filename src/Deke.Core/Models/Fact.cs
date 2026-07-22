@@ -19,6 +19,17 @@ public class Fact
     public string? OutdatedReason { get; set; }
     public DateTimeOffset? ValidFrom { get; set; }
     public DateTimeOffset? ValidUntil { get; set; }
+    public int CorroborationCount { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
+    public bool ContradictionFlag { get; set; }
+    public TrustState TrustState { get; set; } = TrustState.Unscored;
+
+    // Deduplication (R2): levels 2-3 exact hashes, level 4 similarity fingerprint,
+    // and a pointer to the canonical fact when this one is found to be a duplicate.
+    public string? ContentHash { get; set; }
+    public string? NormalizedHash { get; set; }
+    public long? SimilarityHash { get; set; }
+    public Guid? DuplicateOf { get; set; }
 
     // Navigation
     public Source? Source { get; set; }
@@ -28,4 +39,13 @@ public record ExtractedEntity
 {
     public required string Type { get; init; }
     public required string Value { get; init; }
+}
+
+public enum TrustState
+{
+    Unscored,
+    Accepted,
+    Flagged,
+    Contested,
+    Rejected
 }

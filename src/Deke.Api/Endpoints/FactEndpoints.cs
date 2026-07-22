@@ -67,7 +67,7 @@ public static class FactEndpoints
 
     private static async Task<IResult> AddFact(
         AddFactRequest request,
-        IFactRepository factRepo,
+        IDeduplicationService dedup,
         IEmbeddingService embeddings,
         CancellationToken ct)
     {
@@ -86,8 +86,8 @@ public static class FactEndpoints
             Metadata = request.Metadata ?? []
         };
 
-        var id = await factRepo.AddAsync(fact, ct);
-        return Results.Created($"/api/facts/{id}", new { id });
+        var result = await dedup.IngestAsync(fact, ExtractionMethod.ManualApi, ct);
+        return Results.Created($"/api/facts/{result.FactId}", new { id = result.FactId, duplicate = result.WasDuplicate });
     }
 
     internal static async Task<IResult> UpdateFact(

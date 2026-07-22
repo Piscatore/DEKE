@@ -10,7 +10,7 @@ public class BootstrapIngestionService
     private static readonly string[] BootstrapPaths = ["docs", "thoughts"];
 
     private readonly ISourceRepository _sourceRepo;
-    private readonly IFactRepository _factRepo;
+    private readonly IDeduplicationService _dedup;
     private readonly IEnumerable<IHarvester> _harvesters;
     private readonly IChunker _chunker;
     private readonly IExtractionService _extractionService;
@@ -19,7 +19,7 @@ public class BootstrapIngestionService
 
     public BootstrapIngestionService(
         ISourceRepository sourceRepo,
-        IFactRepository factRepo,
+        IDeduplicationService dedup,
         IEnumerable<IHarvester> harvesters,
         IChunker chunker,
         IExtractionService extractionService,
@@ -27,7 +27,7 @@ public class BootstrapIngestionService
         ILogger<BootstrapIngestionService> logger)
     {
         _sourceRepo = sourceRepo;
-        _factRepo = factRepo;
+        _dedup = dedup;
         _harvesters = harvesters;
         _chunker = chunker;
         _extractionService = extractionService;
@@ -98,8 +98,9 @@ public class BootstrapIngestionService
                         Entities = extracted.Entities
                     };
 
-                    await _factRepo.AddAsync(fact, ct);
-                    factsAdded++;
+                    var dedupResult = await _dedup.IngestAsync(fact, ExtractionMethod.FileHarvest, ct);
+                    if (!dedupResult.WasDuplicate)
+                        factsAdded++;
                 }
             }
         }

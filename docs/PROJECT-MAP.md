@@ -166,7 +166,13 @@ for which regions are done.
 - **What it is:** `DbConnectionFactory` (opens an `NpgsqlConnection` from a
   shared `NpgsqlDataSource`), `DapperConfig.Initialize()` (one-time Dapper
   type-handler + dialect registration), and four custom `SqlMapper.TypeHandler`
-  implementations (Jsonb, GuidArray, FloatArray, Enum).
+  implementations (Jsonb, GuidArray, FloatArray, Enum). `DapperConfig`
+  registers one `JsonbTypeHandler<T>` instance per JSONB-backed .NET type and
+  one `EnumTypeHandler<T>` per string-backed native enum column; P1-1 (2026-
+  07-21) added four new `EnumTypeHandler` registrations (`SourceTier`,
+  `TrustState`, `ExtractionMethod`, `ChangeReason`) and one new
+  `JsonbTypeHandler<List<SourceTier>>` registration for
+  `domain_trust_policy`'s `auto_accept_tiers`/`flag_for_review_tiers` columns.
 - **Responsibility:** Owns how every repository gets a PostgreSQL connection
   and how Dapper maps PostgreSQL-specific column types (`jsonb`, `uuid[]`,
   `real[]`, native enums) to/from .NET types. The pgvector `vector` type
@@ -238,27 +244,38 @@ for which regions are done.
   `Extraction/SemanticChunkerAdapter.cs`.
 
 ## Repositories  [KEEP]
-- **What it is:** Nine Dapper-based repository implementations — one per
+- **What it is:** Twelve Dapper-based repository implementations — one per
   `Deke.Core` repository interface: `FactRepository`, `SourceRepository`,
   `TermRepository`, `PatternRepository`, `FactRelationRepository`,
   `LearningLogRepository`, `InteractionLogRepository`,
-  `FederationPeerRepository`, `AdvisoryInteractionRepository`.
+  `FederationPeerRepository`, `AdvisoryInteractionRepository`, and — added by
+  P1-1 (2026-07-21) — `FactProvenanceRepository`, `FactVersionRepository`,
+  `DomainTrustPolicyRepository`.
 - **Responsibility:** Owns all SQL for CRUD + the pgvector similarity search
   (`FactRepository.SearchAsync`, `1 - (embedding <=> @vector::vector)`).
   Every repository follows the same shape: constructor-injected
-  `DbConnectionFactory`, raw SQL strings, no query builder.
+  `DbConnectionFactory`, raw SQL strings, no query builder. Two of the three
+  P1-1 repositories deviate slightly: `FactVersionRepository` adds
+  `GetAsOfAsync` (a point-in-time query answering "what did we believe on
+  date X?"), and `DomainTrustPolicyRepository` exposes `UpsertAsync` instead
+  of separate insert/update, since `domain_trust_policy` is keyed by
+  `domain` rather than an auto-generated id.
 - **Key dependencies:** →Data Access & Type Handlers (`DbConnectionFactory`,
   registered type handlers).
 - **Naming issues:** none.
 - **Design smells:** none.
 - **Confidence:** HIGH (`FactRepository`, `FederationPeerRepository` read in
-  full; remaining seven inferred from consistent naming, 1:1 interface match
-  confirmed in `ServiceCollectionExtensions.cs`, and the two read in full
-  sharing an identical structural pattern — not independently read line by
-  line).
+  full; remaining seven pre-P1-1 repositories inferred from consistent
+  naming, 1:1 interface match confirmed in `ServiceCollectionExtensions.cs`,
+  and the two read in full sharing an identical structural pattern — not
+  independently read line by line; the three P1-1 repositories and their
+  interfaces read in full).
 - **Sources read:** `Repositories/FactRepository.cs` (full),
   `FederationPeerRepository.cs` (partial); interface list cross-checked
-  against `ServiceCollectionExtensions.cs:32-38,75`.
+  against `ServiceCollectionExtensions.cs:32-38,75`;
+  `Repositories/FactProvenanceRepository.cs`,
+  `FactVersionRepository.cs`, `DomainTrustPolicyRepository.cs`, and their
+  matching `Deke.Core/Interfaces/I*.cs` files (all full, P1-1 addition).
 
 ## Trust  [KEEP]
 - **What it is:** `TrustScoringService`, the sole `ITrustScoringService`

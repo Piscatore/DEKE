@@ -27,6 +27,7 @@ if (string.IsNullOrEmpty(builder.Configuration["ApiKey"]))
 
 builder.Services.AddDekeInfrastructure(connectionString);
 builder.Services.AddDekeEmbeddings(builder.Configuration);
+builder.Services.AddDekeDedup(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
 
 // Authentication

@@ -16,7 +16,9 @@ public class FactRepository : IFactRepository
         """
         id, content, domain, confidence, source_id, related_fact_ids,
         entities, metadata, created_at, updated_at, is_outdated, outdated_reason,
-        valid_from, valid_until
+        valid_from, valid_until, corroboration_count, last_verified_at,
+        contradiction_flag, trust_state, content_hash, normalized_hash,
+        similarity_hash, duplicate_of
         """;
 
     private const string SelectAllColumns = SelectColumnsNoEmbedding + ", embedding";
@@ -82,34 +84,60 @@ public class FactRepository : IFactRepository
     {
         await using var conn = await _db.CreateConnectionAsync(ct);
         var embeddingParam = fact.Embedding is not null ? new Vector(fact.Embedding) : null;
-        await conn.ExecuteAsync(
+        var parameters = new
+        {
+            fact.Id,
+            fact.Content,
+            fact.Domain,
+            Embedding = embeddingParam,
+            fact.Confidence,
+            fact.SourceId,
+            fact.RelatedFactIds,
+            fact.Entities,
+            fact.Metadata,
+            fact.CreatedAt,
+            fact.UpdatedAt,
+            fact.IsOutdated,
+            fact.OutdatedReason,
+            fact.ValidFrom,
+            fact.ValidUntil,
+            fact.CorroborationCount,
+            fact.LastVerifiedAt,
+            fact.ContradictionFlag,
+            fact.TrustState,
+            fact.ContentHash,
+            fact.NormalizedHash,
+            fact.SimilarityHash,
+            fact.DuplicateOf
+        };
+
+        // ON CONFLICT guards the per-domain normalized-hash uniqueness. NULL
+        // normalized_hash rows never conflict (NULLs are distinct), so legacy /
+        // hash-less inserts always proceed. On a lost race the insert is
+        // suppressed and we return the winning row's id.
+        var insertedId = await conn.ExecuteScalarAsync<Guid?>(
             """
             INSERT INTO facts (id, content, domain, embedding, confidence, source_id,
                 related_fact_ids, entities, metadata, created_at, updated_at,
-                is_outdated, outdated_reason, valid_from, valid_until)
+                is_outdated, outdated_reason, valid_from, valid_until,
+                corroboration_count, last_verified_at, contradiction_flag, trust_state,
+                content_hash, normalized_hash, similarity_hash, duplicate_of)
             VALUES (@Id, @Content, @Domain, @Embedding::vector, @Confidence, @SourceId,
                 @RelatedFactIds, @Entities, @Metadata, @CreatedAt, @UpdatedAt,
-                @IsOutdated, @OutdatedReason, @ValidFrom, @ValidUntil)
+                @IsOutdated, @OutdatedReason, @ValidFrom, @ValidUntil,
+                @CorroborationCount, @LastVerifiedAt, @ContradictionFlag, @TrustState,
+                @ContentHash, @NormalizedHash, @SimilarityHash, @DuplicateOf)
+            ON CONFLICT (domain, normalized_hash) DO NOTHING
+            RETURNING id
             """,
-            new
-            {
-                fact.Id,
-                fact.Content,
-                fact.Domain,
-                Embedding = embeddingParam,
-                fact.Confidence,
-                fact.SourceId,
-                fact.RelatedFactIds,
-                fact.Entities,
-                fact.Metadata,
-                fact.CreatedAt,
-                fact.UpdatedAt,
-                fact.IsOutdated,
-                fact.OutdatedReason,
-                fact.ValidFrom,
-                fact.ValidUntil
-            });
-        return fact.Id;
+            parameters);
+
+        if (insertedId is Guid id)
+            return id;
+
+        return await conn.ExecuteScalarAsync<Guid>(
+            "SELECT id FROM facts WHERE domain = @Domain AND normalized_hash = @NormalizedHash",
+            parameters);
     }
 
     public async Task UpdateAsync(Fact fact, CancellationToken ct = default)
@@ -132,7 +160,15 @@ public class FactRepository : IFactRepository
                 is_outdated = @IsOutdated,
                 outdated_reason = @OutdatedReason,
                 valid_from = @ValidFrom,
-                valid_until = @ValidUntil
+                valid_until = @ValidUntil,
+                corroboration_count = @CorroborationCount,
+                last_verified_at = @LastVerifiedAt,
+                contradiction_flag = @ContradictionFlag,
+                trust_state = @TrustState,
+                content_hash = @ContentHash,
+                normalized_hash = @NormalizedHash,
+                similarity_hash = @SimilarityHash,
+                duplicate_of = @DuplicateOf
             WHERE id = @Id
             """,
             new
@@ -150,7 +186,15 @@ public class FactRepository : IFactRepository
                 fact.IsOutdated,
                 fact.OutdatedReason,
                 fact.ValidFrom,
-                fact.ValidUntil
+                fact.ValidUntil,
+                fact.CorroborationCount,
+                fact.LastVerifiedAt,
+                fact.ContradictionFlag,
+                fact.TrustState,
+                fact.ContentHash,
+                fact.NormalizedHash,
+                fact.SimilarityHash,
+                fact.DuplicateOf
             });
     }
 
@@ -219,6 +263,83 @@ public class FactRepository : IFactRepository
             WHERE NOT is_outdated
             GROUP BY domain
             """);
+        return results.AsList();
+    }
+
+    public async Task<Fact?> GetByContentHashAsync(string contentHash, string domain, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        return await conn.QueryFirstOrDefaultAsync<Fact>(
+            $"SELECT {SelectColumnsNoEmbedding} FROM facts WHERE content_hash = @contentHash AND domain = @domain LIMIT 1",
+            new { contentHash, domain });
+    }
+
+    public async Task<Fact?> GetByNormalizedHashAsync(string normalizedHash, string domain, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        return await conn.QueryFirstOrDefaultAsync<Fact>(
+            $"SELECT {SelectColumnsNoEmbedding} FROM facts WHERE normalized_hash = @normalizedHash AND domain = @domain LIMIT 1",
+            new { normalizedHash, domain });
+    }
+
+    public async Task IncrementCorroborationAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        await conn.ExecuteAsync(
+            """
+            UPDATE facts
+            SET corroboration_count = corroboration_count + 1,
+                last_verified_at = @now
+            WHERE id = @id
+            """,
+            new { id, now = DateTimeOffset.UtcNow });
+    }
+
+    public async Task SetDuplicateOfAsync(Guid id, Guid canonicalId, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        await conn.ExecuteAsync(
+            "UPDATE facts SET duplicate_of = @canonicalId, updated_at = @now WHERE id = @id",
+            new { id, canonicalId, now = DateTimeOffset.UtcNow });
+    }
+
+    public async Task SetSimilarityHashAsync(Guid id, long similarityHash, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        await conn.ExecuteAsync(
+            "UPDATE facts SET similarity_hash = @similarityHash WHERE id = @id",
+            new { id, similarityHash });
+    }
+
+    public async Task<List<Fact>> GetPendingSimilarityAsync(int limit, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var results = await conn.QueryAsync<Fact>(
+            $"""
+            SELECT {SelectColumnsNoEmbedding} FROM facts
+            WHERE similarity_hash IS NULL
+              AND duplicate_of IS NULL
+              AND is_outdated = FALSE
+            ORDER BY created_at DESC
+            LIMIT @limit
+            """,
+            new { limit });
+        return results.AsList();
+    }
+
+    public async Task<List<Fact>> GetPendingSemanticAsync(int limit, CancellationToken ct = default)
+    {
+        await using var conn = await _db.CreateConnectionAsync(ct);
+        var results = await conn.QueryAsync<Fact>(
+            $"""
+            SELECT {SelectAllColumns} FROM facts
+            WHERE embedding IS NOT NULL
+              AND duplicate_of IS NULL
+              AND is_outdated = FALSE
+            ORDER BY created_at DESC
+            LIMIT @limit
+            """,
+            new { limit });
         return results.AsList();
     }
 }

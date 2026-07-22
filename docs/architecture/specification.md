@@ -93,6 +93,9 @@ Where facts come from. Each source is a monitorable endpoint (RSS feed, web page
 | is_active | BOOLEAN | Whether monitoring is enabled |
 | created_at | TIMESTAMPTZ | Row creation time |
 | metadata | JSONB | Extensible key-value store |
+| source_tier | VARCHAR(20) | Trust tier: Primary, Secondary, Aggregated, Unverified (default Unverified) |
+| independence_fingerprint | VARCHAR(64) | Hash of publisher identity, used to prevent single-source amplification during corroboration |
+| last_verified_at | TIMESTAMPTZ | Last confirmation source is still authoritative |
 
 #### facts
 
@@ -113,6 +116,12 @@ The atomic unit of knowledge. A single claim with provenance metadata.
 | updated_at | TIMESTAMPTZ | Last modification |
 | is_outdated | BOOLEAN | Soft-delete flag |
 | outdated_reason | VARCHAR(200) | Why marked outdated |
+| valid_from | TIMESTAMPTZ | When the fact became true |
+| valid_until | TIMESTAMPTZ | When the fact ceased to be true |
+| corroboration_count | INT | Independent sources asserting an equivalent claim (default 0) |
+| last_verified_at | TIMESTAMPTZ | Last confirmation against source |
+| contradiction_flag | BOOLEAN | Another fact with opposing polarity exists (default FALSE) |
+| trust_state | VARCHAR(20) | Unscored, Accepted, Flagged, Contested, Rejected (default Unscored) |
 
 Indexes: IVFFlat on embedding (cosine ops, lists=100), domain, source_id, created_at DESC, composite (domain, is_outdated).
 
@@ -199,19 +208,20 @@ Known DEKE instances for cross-instance queries.
 | is_healthy | BOOLEAN | Current health status |
 | created_at | TIMESTAMPTZ | When peer was first discovered |
 
-### Planned Tables (P1-1)
-
 #### fact_provenance
 
 One-to-many link between facts and the sources that assert them. Supports corroboration tracking without fact duplication.
 
 | Column | Type | Description |
 |--------|------|-------------|
+| id | UUID PK | Auto-generated |
 | fact_id | UUID FK | Reference to fact |
 | source_id | UUID FK | Reference to source |
 | extracted_at | TIMESTAMPTZ | When this assertion was recorded |
-| extraction_method | VARCHAR(30) | rss_harvest, web_harvest, manual_api, llm_extract |
+| extraction_method | VARCHAR(30) | RssHarvest, WebHarvest, ManualApi, LlmExtract |
 | extraction_confidence | REAL | Confidence of the extraction process itself |
+
+Unique constraint on (fact_id, source_id).
 
 #### fact_version
 
@@ -219,11 +229,12 @@ Immutable change history. Enables "what did we believe on date X?" queries.
 
 | Column | Type | Description |
 |--------|------|-------------|
+| id | UUID PK | Auto-generated |
 | fact_id | UUID FK | Reference to fact |
 | content_snapshot | TEXT | Fact text at this version |
 | embedding_snapshot | vector(384) | Embedding at this version |
 | changed_at | TIMESTAMPTZ | When change occurred |
-| change_reason | VARCHAR(30) | source_update, manual_correction, merge, contradiction_resolution |
+| change_reason | VARCHAR(30) | SourceUpdate, ManualCorrection, Merge, ContradictionResolution |
 
 #### domain_trust_policy
 
@@ -238,27 +249,6 @@ Per-domain configuration governing how strictly provenance is enforced.
 | flag_for_review_tiers | JSONB | Source tiers that enter review queue |
 | temporal_validity_required | BOOLEAN | Facts without valid_from are flagged |
 | min_confidence_score | REAL | Facts below threshold enter review queue |
-
-### Planned Source Table Additions
-
-| Column | Type | Description |
-|--------|------|-------------|
-| credibility_score | REAL | 0.0-1.0, separate from fact confidence |
-| source_tier | VARCHAR(20) | primary, secondary, aggregated, unverified |
-| independence_fingerprint | VARCHAR(64) | Hash of publisher identity for corroboration independence |
-| last_verified_at | TIMESTAMPTZ | Last confirmation source is still authoritative |
-
-### Planned Fact Table Additions
-
-| Column | Type | Description |
-|--------|------|-------------|
-| confidence_score | REAL | 0.0-1.0, assessed at extraction time |
-| corroboration_count | INT | Independent sources asserting equivalent claim |
-| valid_from | TIMESTAMPTZ | When the fact became true |
-| valid_until | TIMESTAMPTZ | When the fact ceased to be true |
-| last_verified_at | TIMESTAMPTZ | Last confirmation against source |
-| contradiction_flag | BOOLEAN | Another fact with opposing polarity exists |
-| trust_state | VARCHAR(20) | unscored, accepted, flagged, contested, rejected |
 
 ---
 
@@ -280,12 +270,18 @@ public class Fact
     public float Confidence { get; set; } = 1.0f;
     public Guid? SourceId { get; set; }
     public List<Guid> RelatedFactIds { get; set; } = [];
-    public JsonElement Entities { get; set; }
-    public Dictionary<string, JsonElement> Metadata { get; set; } = new();
+    public List<ExtractedEntity> Entities { get; set; } = [];
+    public Dictionary<string, JsonElement> Metadata { get; set; } = [];
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public bool IsOutdated { get; set; }
     public string? OutdatedReason { get; set; }
+    public DateTimeOffset? ValidFrom { get; set; }
+    public DateTimeOffset? ValidUntil { get; set; }
+    public int CorroborationCount { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
+    public bool ContradictionFlag { get; set; }
+    public TrustState TrustState { get; set; } = TrustState.Unscored;
 }
 ```
 
@@ -308,9 +304,24 @@ public class Source
     public float Credibility { get; set; } = 0.5f;
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; }
-    public Dictionary<string, JsonElement> Metadata { get; set; } = new();
+    public Dictionary<string, JsonElement> Metadata { get; set; } = [];
+    public SourceTier SourceTier { get; set; } = SourceTier.Unverified;
+    public string? IndependenceFingerprint { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
 }
 ```
+
+### FactProvenance
+
+One-to-many link between a fact and the sources that assert it. Maps to the `fact_provenance` table. Supports corroboration tracking without fact duplication.
+
+### FactVersion
+
+Immutable change-history snapshot of a fact. Maps to the `fact_version` table. `IFactVersionRepository.GetAsOfAsync` answers "what did we believe on date X?" queries.
+
+### DomainTrustPolicy
+
+Per-domain configuration governing how strictly provenance is enforced. Maps to the `domain_trust_policy` table, keyed by `domain` (no surrogate id) -- `IDomainTrustPolicyRepository` exposes `UpsertAsync` rather than separate insert/update.
 
 ### FederationPeer
 
