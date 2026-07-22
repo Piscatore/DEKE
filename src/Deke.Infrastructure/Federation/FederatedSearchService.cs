@@ -56,7 +56,7 @@ public class FederatedSearchService : IFederatedSearchService
 
         // 1. Generate embedding and run local search
         var embedding = _embeddings.GenerateEmbedding(request.Query);
-        var localResults = await _factRepo.SearchAsync(embedding, request.Domain, limit, minSimilarity, ct);
+        var localResults = await _factRepo.SearchAsync(embedding, request.Domain, limit, minSimilarity, ct: ct);
 
         // 2. Determine if federation is needed
         var federatedResults = new List<(FactSearchResult Result, string PeerInstanceId, int Hops)>();

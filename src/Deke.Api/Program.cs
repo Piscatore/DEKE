@@ -56,5 +56,7 @@ app.MapSearchEndpoints();
 app.MapFactEndpoints();
 app.MapSourceEndpoints();
 app.MapFederationEndpoints();
+app.MapReviewQueueEndpoints();
+app.MapDomainTrustPolicyEndpoints();
 
 app.Run();

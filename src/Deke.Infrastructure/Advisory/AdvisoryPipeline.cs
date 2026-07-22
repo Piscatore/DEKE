@@ -64,7 +64,7 @@ public class AdvisoryPipeline : IAdvisoryPipeline
 
         // Stage 2 — fact retrieval (local-only, trust-filtered).
         var embedding = _embeddings.GenerateEmbedding(request.Query);
-        var results = await _facts.SearchAsync(embedding, request.Domain, _config.RetrievalLimit, _config.MinSimilarity, ct);
+        var results = await _facts.SearchAsync(embedding, request.Domain, _config.RetrievalLimit, _config.MinSimilarity, ct: ct);
 
         if (results.Count == 0)
         {

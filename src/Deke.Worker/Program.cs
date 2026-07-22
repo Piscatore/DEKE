@@ -18,6 +18,7 @@ builder.Services.AddDekeEmbeddings(builder.Configuration);
 builder.Services.AddDekeHarvesters();
 builder.Services.AddDekeDedup(builder.Configuration);
 builder.Services.AddDekeFederation(builder.Configuration);
+builder.Services.AddDekeQualityPipeline(builder.Configuration);
 
 // PatternDiscoveryService summarizes fact clusters via the same keyed IChatClient
 // backends the Advisory pipeline uses (ollama key -- local/cheap, matches its
@@ -47,6 +48,8 @@ builder.Services.AddHostedService<LearningCycleService>();
 builder.Services.AddHostedService<PeerHealthCheckService>();
 builder.Services.AddHostedService<SimilarityDedupService>();
 builder.Services.AddHostedService<SemanticDedupService>();
+builder.Services.AddHostedService<TrustStateEvaluationService>();
+builder.Services.AddHostedService<ContradictionDetectionService>();
 
 var host = builder.Build();
 host.Run();

@@ -81,13 +81,19 @@ public class InteractionLoggingTests
     private sealed class FakeFactRepository(List<FactSearchResult> results) : IFactRepository
     {
         public Task<List<FactSearchResult>> SearchAsync(
-            float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f, CancellationToken ct = default)
+            float[] embedding, string? domain, int limit = 10, float minSimilarity = 0.5f,
+            float? maxSimilarity = null, CancellationToken ct = default)
             => Task.FromResult(results);
 
         public Task<Fact?> GetByIdAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetByDomainAsync(string domain, int limit = 100, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<List<Fact>> GetBySourceAsync(Guid sourceId, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<Guid> AddAsync(Fact fact, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingTrustEvaluationAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task SetTrustStateAsync(Guid id, TrustState state, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetContradictionScanCandidatesAsync(int limit, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task MarkContradictedAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Fact>> GetPendingReviewAsync(string? domain, int limit, CancellationToken ct = default) => throw new NotImplementedException();
         public Task UpdateAsync(Fact fact, CancellationToken ct = default) => throw new NotImplementedException();
         public Task MarkOutdatedAsync(Guid id, string reason, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<int> GetCountAsync(string domain, CancellationToken ct = default) => throw new NotImplementedException();

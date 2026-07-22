@@ -145,6 +145,30 @@ already-stored facts is separate follow-up work.
 
 Merged to main via PR #31. See [ROADMAP.md](../ROADMAP.md) R2 for closure status.
 
+### 2026-07-22 P1-2 Quality Pipeline Activation
+
+P1-2 activates the P1-1 trust schema into working behavior: `ITrustEvaluator`
+classifies `Unscored` facts to `Accepted`/`Flagged` per `domain_trust_policy`,
+`TrustStateEvaluationService` and `ContradictionDetectionService` run the
+classification and basic contradiction-detection cycles, and `GET
+/api/review-queue` plus `GET`/`PUT /api/domains/{domain}/trust-policy` close
+the P1-1 gap where the trust-policy repository shipped with no endpoints
+wired to it. OI-07 (version-aware contradiction resolution) and OI-08 (fact
+retirement/archival) were reviewed as scheduled and dispositioned as
+deferred -- see [ADR-0012](../adr/ADR-0012-oi-07-version-aware-contradiction-deferred.md)
+and [ADR-0013](../adr/ADR-0013-oi-08-fact-retirement-archival-deferred.md)
+for the reasoning and each item's narrowed revisit trigger.
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-07-22 | Fail open to `Accepted` when a domain has no configured `domain_trust_policy`, rather than leaving facts stuck at `Unscored` | Matches today's de-facto no-gating reality (zero domains have a seeded policy yet) and top-level CLAUDE.md's zero-config domain philosophy ("just start adding facts... no pre-configuration needed"). A fact stuck at `Unscored` forever would never resolve into a state the rest of the pipeline can act on, silently excluding every fact in every domain from the review queue's `Flagged`/`Contested` filter until an operator configures a policy nobody yet knows they need. |
+
+Verified: build green, 115/115 tests passing. `init.sql`'s new partial index
+(`idx_facts_trust_state`) is not yet applied to the live `deke-postgres`
+container -- pending, tracked as a follow-up step, same class of gap as
+P1-1's `interaction_logs` discovery above. See [ROADMAP.md](../ROADMAP.md)
+P1-2 for closure status.
+
 ---
 
 ## Guardrails and Risk Analysis
@@ -400,3 +424,11 @@ Precise trigger conditions:
 | After 50+ user interactions on a single domain | OI-06 (Social Proof), OI-05 (Debate-and-Critique) |
 | Before any high-stakes domain activation | OI-09 (Curator Workflow) -- mandatory |
 | When second external consumer requests integration | OI-10 (A2A Trigger Conditions) |
+
+> **2026-07-22 review ([ADR-0012](../adr/ADR-0012-oi-07-version-aware-contradiction-deferred.md)
+> and [ADR-0013](../adr/ADR-0013-oi-08-fact-retirement-archival-deferred.md), both accepted):**
+> OI-07 (Version-Aware Contradiction) and OI-08 (Fact Retirement) were reviewed as scheduled,
+> during P1-2 implementation. Both are dispositioned as deferred -- see the two ADRs for the
+> reasoning and each item's narrowed revisit trigger. The "After P1-2 (Quality Pipeline)" row
+> above is retained as the historical record of what was scheduled; both its items are now
+> resolved.

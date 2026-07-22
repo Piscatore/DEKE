@@ -78,6 +78,8 @@ CREATE INDEX idx_facts_content_hash ON facts(content_hash);
 CREATE UNIQUE INDEX idx_facts_domain_normhash ON facts(domain, normalized_hash);
 -- R2 dedup: async level-4 candidate scan (facts without a similarity hash yet)
 CREATE INDEX idx_facts_pending_simhash ON facts(id) WHERE similarity_hash IS NULL;
+-- P1-2 quality pipeline: review-queue selection and pending-evaluation/contradiction scans
+CREATE INDEX idx_facts_trust_state ON facts(domain, trust_state) WHERE trust_state <> 'Accepted';
 
 -- Terms: Domain-specific terminology
 CREATE TABLE terms (

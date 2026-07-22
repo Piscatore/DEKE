@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Deke.Core.Models;
 
@@ -38,6 +39,7 @@ public enum SourceType
     File
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<SourceTier>))]
 public enum SourceTier
 {
     Primary,

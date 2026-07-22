@@ -49,7 +49,7 @@ NOW (no unmet dependencies, parallelizable)
 
 NEXT (dependencies above; P1-1 done 2026-07-21, so R2/P1-2 are now available)
   R2    five-level deduplication       ← done 2026-07-22
-  P1-2  quality pipeline               ← unblocked, depends only on P1-1
+  P1-2  quality pipeline               ← done 2026-07-22
   RES-1 ─→ (spawned design packet: hybrid retrieval)
   R4   cross-encoder re-ranking        (R1 done; consult RES-1 findings)
   R5   PDF + Markdown ingestion        (R1 done)
@@ -196,7 +196,7 @@ TRIGGER-GATED (sized only when the trigger fires)
   discard-and-corroborate, extracted `IDuplicateLinker`). Retroactive backfill
   of pre-existing NULL-hash facts deferred out of R2.
 
-### P1-2: Quality pipeline
+### P1-2: Quality pipeline — done (2026-07-22)
 
 - **Goal:** Review queue (`GET /api/review-queue`), temporal-validity
   handling, contradiction detection. Opens with the scheduled OI-07
@@ -210,6 +210,25 @@ TRIGGER-GATED (sized only when the trigger fires)
 - **Tier:** strongest available, extended thinking (contains open design).
 - **Done when:** review-queue endpoint live; contradiction detection behind a
   version-aware policy or an explicit deferral ADR; OI-07/OI-08 dispositioned.
+- **Status:** Done 2026-07-22. Activates the P1-1 trust schema into working
+  behavior: `ITrustEvaluator` (policy-driven `Unscored` → `Accepted`/
+  `Flagged` classification, fails open to `Accepted` when a domain has no
+  configured policy), `TrustStateEvaluationService` and
+  `ContradictionDetectionService` (`Deke.Worker` background jobs mirroring
+  R2's L4/L5 shape), `GET /api/review-queue`, and `GET`/`PUT
+  /api/domains/{domain}/trust-policy` (closing the P1-1 gap where the
+  trust-policy repository shipped with no endpoints wired to it).
+  Contradiction detection ships a basic, non-version-aware
+  embedding-similarity heuristic (0.75-0.90 band, kept below L5's 0.92
+  dedup threshold) rather than the full version-aware design. OI-07
+  (version-aware contradiction) and OI-08 (fact retirement/archival) were
+  reviewed as scheduled and dispositioned as deferred, not built — see
+  [decisions.md](architecture/decisions.md) 2026-07-22 entry,
+  [ADR-0012](adr/ADR-0012-oi-07-version-aware-contradiction-deferred.md),
+  and [ADR-0013](adr/ADR-0013-oi-08-fact-retirement-archival-deferred.md).
+  Verified: build green, 115/115 tests passing. `init.sql`'s new partial
+  index (`idx_facts_trust_state`) is not yet applied to the live
+  `deke-postgres` container — pending follow-up.
 
 ### R4: Cross-encoder re-ranking
 
@@ -361,3 +380,4 @@ beats speculative sizing.
 | 2026-07-14 | Overhaul dissolved | All 8 exit criteria passed (OP-012). `overhaul/` archived in place — kept for history, excluded from agent context budgets. Repo tagged `overhaul-complete` (overhaul packet OP-013). |
 | 2026-07-21 | P1-1 done | Trust and provenance schema, reconciled scope (see [decisions.md](architecture/decisions.md) 2026-07-21 entry): 3 new tables (`fact_provenance`, `fact_version`, `domain_trust_policy`), new trust columns on `sources`/`facts`, matching models/repositories/DI. Schema only — algorithms deferred to P1-2. Build green, 80/80 tests passing. R2 and P1-2 unblocked. |
 | 2026-07-22 | R2 done | Five-level deduplication (see [decisions.md](architecture/decisions.md) 2026-07-22 entry): L1–L3 hash checks sync at ingest, L4 SimHash near-dup + L5 semantic ≥ 0.92 async jobs. All fact inserts across Worker/API/MCP routed through one dedup gateway with per-domain `UNIQUE(domain, normalized_hash)`; provenance written on every insert; discard-and-corroborate duplicate resolution via extracted `IDuplicateLinker`. Per-level test coverage added. Merged to main via PR #31. Retroactive backfill deferred. |
+| 2026-07-22 | P1-2 done | Quality pipeline activates P1-1's trust schema (see [decisions.md](architecture/decisions.md) 2026-07-22 entry): `ITrustEvaluator` policy-driven `Unscored` → `Accepted`/`Flagged` classification (fails open when a domain has no configured policy); `TrustStateEvaluationService` and `ContradictionDetectionService` background jobs; `GET /api/review-queue` and `GET`/`PUT /api/domains/{domain}/trust-policy` endpoints, closing a P1-1 gap. Contradiction detection is a basic, non-version-aware heuristic. OI-07 (version-aware contradiction) and OI-08 (fact retirement/archival) reviewed and dispositioned as deferred via [ADR-0012](adr/ADR-0012-oi-07-version-aware-contradiction-deferred.md) and [ADR-0013](adr/ADR-0013-oi-08-fact-retirement-archival-deferred.md). Build green, 115/115 tests passing. |
