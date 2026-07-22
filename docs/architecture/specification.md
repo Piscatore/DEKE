@@ -123,7 +123,7 @@ The atomic unit of knowledge. A single claim with provenance metadata.
 | contradiction_flag | BOOLEAN | Another fact with opposing polarity exists (default FALSE) |
 | trust_state | VARCHAR(20) | Unscored, Accepted, Flagged, Contested, Rejected (default Unscored) |
 
-Indexes: IVFFlat on embedding (cosine ops, lists=100), domain, source_id, created_at DESC, composite (domain, is_outdated).
+Indexes: IVFFlat on embedding (cosine ops, lists=100), domain, source_id, created_at DESC, composite (domain, is_outdated), partial (domain, trust_state) WHERE trust_state <> 'Accepted' (serves the review-queue and pending-evaluation/contradiction-scan queries).
 
 #### terms
 
@@ -323,6 +323,10 @@ Immutable change-history snapshot of a fact. Maps to the `fact_version` table. `
 
 Per-domain configuration governing how strictly provenance is enforced. Maps to the `domain_trust_policy` table, keyed by `domain` (no surrogate id) -- `IDomainTrustPolicyRepository` exposes `UpsertAsync` rather than separate insert/update.
 
+### ITrustEvaluator
+
+Classifies a fact's `TrustState` (`Deke.Core.Interfaces`; implemented by `TrustEvaluator` in `Deke.Infrastructure.Trust`). Pure and synchronous -- no I/O. `Evaluate(Fact, SourceTier?, DomainTrustPolicy?)` fails open to `Accepted` when the domain has no configured policy; otherwise checks `RequirePrimarySource`, `TemporalValidityRequired` (flags facts missing `ValidFrom`), `MinConfidenceScore`, `MinCorroboration`, and `FlagForReviewTiers`, returning `Flagged` on the first gate that fails. Distinct from `ITrustScoringService`, the pre-existing numeric search-ranking multiplier that already handles `valid_until` expiry at query time -- see [decisions.md](decisions.md) (OI-08 disposition, ADR-0013) for how the two mechanisms divide responsibility. Driven by `TrustStateEvaluationService` (`Deke.Worker`), which classifies `Unscored` facts per domain on a timed cycle.
+
 ### FederationPeer
 
 A known DEKE instance. Maps to the `federation_peers` table.
@@ -377,6 +381,14 @@ Federation headers (inbound): `X-Federation-Request-Id`, `X-Federation-Visited`,
 | POST | `/api/federation/peers` | Register a new peer (requires API key) |
 | DELETE | `/api/federation/peers/{id}` | Remove a peer |
 
+### Trust and Review Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/review-queue` | Facts pending human review (`trust_state` `Flagged` or `Contested`). Accepts domain filter and limit (clamped 1-500, default 100). |
+| GET | `/api/domains/{domain}/trust-policy` | Get a domain's trust policy configuration. Returns 404 if unconfigured. |
+| PUT | `/api/domains/{domain}/trust-policy` | Create or replace a domain's trust policy configuration (requires API key) |
+
 ### Planned Endpoints
 
 | Method | Path | Package | Description |
@@ -386,9 +398,6 @@ Federation headers (inbound): `X-Federation-Request-Id`, `X-Federation-Visited`,
 | POST | `/api/feedback` | EE | Submit explicit feedback for an interaction |
 | GET | `/api/interactions` | EE | Query interaction log |
 | GET | `/api/health/domain/{domain}` | EE | Domain evolution health report |
-| GET | `/api/domains/{domain}/trust-policy` | P1-1 | Domain trust policy configuration |
-| PUT | `/api/domains/{domain}/trust-policy` | P1-1 | Update trust policy |
-| GET | `/api/review-queue` | P1-2 | Facts pending human review |
 
 ---
 
